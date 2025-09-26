@@ -96,8 +96,8 @@ type Pt = { t: number; v: number }; // t = 虚拟墙钟毫秒
 
 /** ===== 行情生成参数（更稳、更小波动） ===== */
 const CONFIG = {
-  basePrice: 116200.13,
-  sampleMs: 150,        // 采样更密
+  basePrice: 116200,
+  sampleMs: 200,        // 采样更密
   pxPerSec: 100,
   nowXR: 0.62,
 
@@ -108,7 +108,7 @@ const CONFIG = {
   driftScale: 0.0005,
 
   meanRevertTo: 116200.0,
-  meanRevertK: 0.15,    // ↑ 回归更强，跑不远
+  meanRevertK: 0.35,    // ↑ 回归更强，跑不远
 
   volCycleSec: 18,
   volCycleMin: 0.9,     // 波动率范围更窄
