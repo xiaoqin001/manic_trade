@@ -343,7 +343,7 @@ function ChartCanvas() {
       ctx.textBaseline = "alphabetic";
 
 
-      ctx.fillText(formatTimeUTC9(lastMs), TL_MARGIN_X, TL_TIME_Y+TIME_PADDING_TOP);
+      ctx.fillText(formatTimeUTC9(lastMs), TL_MARGIN_X, TL_TIME_Y + TIME_PADDING_TOP);
 
       // 文字度量
       ctx.textAlign = "left";
@@ -405,7 +405,7 @@ function ChartCanvas() {
 
       // 曲线风格
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(90, 200, 250, 0.95)";
+      ctx.strokeStyle = "#5FC5FF";
       ctx.shadowColor = "rgba(90, 200, 250, 0.25)";
       ctx.shadowBlur = 6;
 
@@ -456,14 +456,19 @@ function ChartCanvas() {
       ctx.fillText(label, priceAnchorX, boxY + boxH / 2);
 
       // 当前价水平虚线
-      ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      ctx.beginPath(); ctx.moveTo(0, lastY); ctx.lineTo(w, lastY); ctx.stroke();
-      ctx.setLineDash([]);
+      // ctx.setLineDash([6, 6]);
+      // ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      // ctx.beginPath(); ctx.moveTo(0, lastY); ctx.lineTo(w, lastY); ctx.stroke();
+      // ctx.setLineDash([]);
+      ctx.strokeStyle = "#E0E0E0";
+      ctx.beginPath();
+      ctx.moveTo(0, lastY);
+      ctx.lineTo(w, lastY);
+      ctx.stroke();
 
       // “现在线”
       const nowX = chartW * CONFIG.nowXR;
-      ctx.strokeStyle = "rgba(80,160,255,0.65)";
+      ctx.strokeStyle = "#5FC5FF";
       ctx.beginPath(); ctx.moveTo(nowX + 0.5, 0); ctx.lineTo(nowX + 0.5, h); ctx.stroke();
 
       // 当前价圆点
