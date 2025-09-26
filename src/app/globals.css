@@ -1,26 +1,411 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0b0b2b;
+  /* --panel: #111321; */
+  --panel: #111111;
+  --grid: rgba(255, 255, 255, .08);
+  --tick: rgba(255, 255, 255, .16);
+  --text: #fff;
+  --rail: 40px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* ========== 页面布局 ========== */
+.main {
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.container {
+  max-width: 1680px;
+  margin: 0 auto;
+  /* padding: 0 24px; */
+  padding: 0 var(--rail);
+}
+
+.grid3 {
+  display: grid;
+  /* grid-template-columns: 220px 1fr 220px;
+  gap: 24px; */
+  align-items: stretch;
+
+  /* 左右列随内容（SideReel 的 width）自适应，中间自适应 */
+  grid-template-columns: min-content 1fr min-content;
+  /* 中间与左右 SideReel 的间距 = --rail */
+  gap: var(--rail);
+}
+
+@media (max-width: 900px) {
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
+
+  .hide-md {
+    display: none;
+  }
+}
+
+/* ========== 中央内容卡片 ========== */
+/* 边框保持 100% 不透明；内容透明度放在 .cardContent 上控制 */
+.card {
+  position: relative;
+  margin: 176px 10px 104px 10px;
+  border-radius: 16px;
+  backdrop-filter: blur(6px);
+  border: 1px solid #FFFFFF;
+  /* 边框保持100%不透明 */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+  overflow: hidden;
+}
+
+/* 只让卡片内容透明，边框不变 */
+
+.cardContent {
+  position: relative;
+  inset: 1px;
+  display: block;
+  background: #111111;
+  /* ← 直接用纯色，不再 color-mix */
+  opacity: .6;
+  /* ← 内容 60% 透明 */
+}
+
+
+/* ⚠️ 静态格子背景已移除，格子由 Canvas 绘制并随时间移动 */
+/* （若你此前在 .card::before 或 .cardContent::before 里画格子，请不要再启用） */
+
+/* ========== 图表 + 面板 容器 ========== */
+.chartContainer {
+  position: relative;
+  height: 494px;
+  /* 统一高度（如需自适应可改为 aspect-ratio 方案） */
+  /* padding-right: 142.5px;   */
+  /* 右侧面板宽度，需与组件里 PANEL_W 保持一致 */
+  z-index: 1;
+  /* 在内容背景之上 */
+}
+
+/* ChartCanvas 包裹与画布占满父容器 */
+.chartWrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.chartCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+}
+
+/* 右侧面板贴边，位于内容层（会随 .cardContent 一起透明） */
+.right_panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 142.5px;
+  /* 与 chartContainer 的 padding-right 对齐 */
+  height: 100%;
+  object-fit: fill;
+  object-position: right center;
+  pointer-events: none;
+  z-index: 2;
+  /* 在内容背景之上、在图线之下或同层均可 */
+}
+
+/* ========== 可能存在的右侧表单/按钮（若不用可忽略） ========== */
+.panelWrap {
+  position: absolute;
+  inset: 0 0 0 auto;
+  /* 右侧贴边 */
+  width: 260px;
+  pointer-events: none;
+  display: flex;
+}
+
+.panelDivider {
+  width: 1px;
+  background: rgba(255, 255, 255, .15);
+  margin-left: auto;
+}
+
+.panel {
+  width: 260px;
+  padding-left: 20px;
+  position: sticky;
+  top: 32px;
+  height: fit-content;
+}
+
+.panel h6 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(255, 255, 255, .6);
+}
+
+.field {
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .1);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: rgba(255, 255, 255, .85);
+}
+
+.btn {
+  pointer-events: auto;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  color: #fff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+  cursor: pointer;
+}
+
+.btnBuy {
+  background: color-mix(in srgb, #10b981 90%, black 0%);
+}
+
+.btnBuy:hover {
+  background: #16c08f;
+}
+
+.btnSell {
+  background: color-mix(in srgb, #e11d48 90%, black 0%);
+  margin-top: 12px;
+}
+
+.btnSell:hover {
+  background: #f03761;
+}
+
+/* ========== 两侧循环滚动（SideReel） ========== */
+.side {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.reelTrack {
+  will-change: transform;
+  animation-name: reel-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes reel-scroll {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
+
+  /* 内容加倍，无缝滚动 */
+}
+
+.reelItem {
+  padding: 6px;
+}
+
+.reelCard {
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+  /* width: 180px; */
+}
+
+.reelImg {
+  display: block;
+  width: 100%;
+  /* width: 180px; */
+  height: auto;
+  opacity: 0.4;
+  /* 40% */
+}
+
+.sideMask {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--bg), transparent 15%, transparent 85%, var(--bg));
+  pointer-events: none;
+  opacity: .85;
+}
+
+
+
+/* ======= Full-page Overlay (Hero) ======= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  /* 盖住整页 */
+  display: grid;
+  place-items: center;
+}
+
+.overlayBg {
+  position: absolute;
+  inset: 0;
+  background: url("/Rectangle%2042.png") center/cover no-repeat;
+  pointer-events: none; /* 不挡下面的交互（如果需要可去掉） */
+}
+
+/* .overlayBg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: none;
+} */
+
+
+
+/* 内容容器（限制宽度） */
+.overlayInner {
+  position: relative;
+  z-index: 1;
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+/* 关闭按钮 */
+.overlayClose {
+  position: absolute;
+  right: 18px;
+  top: 12px;
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.overlayClose:hover {
+  opacity: 1;
+}
+
+/* 居中内容 */
+.overlayContent {
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+  text-align: center;
+  color: #fff;
+}
+
+/* Logo（图片或文字占位） */
+.heroLogo {
+  width: min(560px, 70vw);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 8px 30px rgba(0, 0, 0, .4));
+}
+
+.heroLogoText {
+  font: 900 clamp(40px, 10vw, 96px) "Montserrat", ui-sans-serif, system-ui;
+  letter-spacing: 2px;
+}
+
+/* 标题 */
+.heroTitle {
+  margin: 6px 0 0;
+  font: 700 clamp(18px, 3.5vw, 36px) "Montserrat", ui-sans-serif, system-ui;
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, .5);
+}
+
+/* 按钮组 */
+.heroBtns {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 12px;
+  font: 700 16px/1 "Montserrat", ui-sans-serif, system-ui;
+  text-decoration: none;
+  transition: transform .08s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+  will-change: transform, box-shadow;
+}
+
+.btnPrimary {
+  color: #0b0b2b;
+  background: #ffffff;
+  box-shadow: 0 8px 32px rgba(255, 255, 255, .18);
+}
+
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 40px rgba(255, 255, 255, .26);
+}
+
+.btnGhost {
+  color: #fff;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .25);
+  backdrop-filter: blur(6px);
+}
+
+.btnGhost:hover {
+  background: rgba(255, 255, 255, .2);
+  transform: translateY(-1px);
+}
+
+/* 底部补充说明 */
+.heroSubnote {
+  margin-top: 8px;
+  font: 600 14px/1.3 "Montserrat", ui-sans-serif, system-ui;
+  color: rgba(255, 255, 255, .85);
+}
+
+.heroLink {
+  color: #b7c8ff;
+  text-decoration: underline;
+}
+
+.heroLink:hover {
+  color: #d9e1ff;
+}
+
+.heroFootnote {
+  margin-top: 6px;
+  font: 500 12px/1 "Montserrat", ui-sans-serif, system-ui;
+  color: rgba(255, 255, 255, .7);
 }
