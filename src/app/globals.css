@@ -6,6 +6,8 @@
   --tick: rgba(255, 255, 255, .16);
   --text: #fff;
   --rail: 40px;
+  --chartH: 494px;
+  --vBias: 0.4;
 }
 
 * {
@@ -64,13 +66,18 @@ body {
 /* 边框保持 100% 不透明；内容透明度放在 .cardContent 上控制 */
 .card {
   position: relative;
-  margin: 176px 10px 104px 10px;
+  /* margin: 176px 10px 104px 10px; */
   border-radius: 16px;
   backdrop-filter: blur(6px);
   border: 1px solid #FFFFFF;
   /* 边框保持100%不透明 */
   box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
   overflow: hidden;
+  margin:
+    clamp(64px, calc((100vh - var(--chartH)) * (1 - var(--vBias))), 220px)
+    10px
+    clamp(56px, calc((100vh - var(--chartH)) * var(--vBias)), 200px)
+    10px;
 }
 
 /* 只让卡片内容透明，边框不变 */

@@ -9,16 +9,16 @@ const TIME_PER_COL_SEC = 10;     // 每列代表的秒数
 const H_FULL_CELLS = 4;          // 横向中间完整格数量（上下各半格）
 
 /** ===== 右侧价格对齐/样式 ===== */
-const CAPSULE_W = 96;            // 当前价格胶囊宽（更窄）
-const CAPSULE_H = 24;            // 当前价格胶囊高
+const CAPSULE_W = 85;            // 当前价格胶囊宽（更窄）
+const CAPSULE_H = 18;            // 当前价格胶囊高
 
 /** ===== 字体：时间/价格 ===== */
 const TIME_FONT_SIZE = 9;
 const TIME_FONT_WEIGHT = 600;    // Montserrat SemiBold
 const TIME_FONT_FAMILY = "Montserrat, ui-monospace, SFMono-Regular, Menlo, monospace";
 
-const PRICE_FONT_SIZE = 12;
-const PRICE_FONT_FAMILY = "ui-monospace, SFMono-Regular, Menlo, monospace";
+const PRICE_FONT_SIZE = 10;
+const PRICE_FONT_FAMILY = "Montserrat, ui-monospace, SFMono-Regular, Menlo, monospace";
 
 
 
@@ -329,7 +329,8 @@ function ChartCanvas() {
         // 画横线
         ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w, yy); ctx.stroke();
         // 画价格标签（量化后，保留两位）
-        ctx.fillText(vQ.toFixed(CONFIG.priceLabelDigits), priceAnchorX, yy - 2);
+        // ctx.fillText(vQ.toFixed(CONFIG.priceLabelDigits), priceAnchorX, yy - 2);
+        ctx.fillText(formatPrice(vQ, CONFIG.priceLabelDigits), priceAnchorX, yy - 2);
       }
     }
 
@@ -349,12 +350,12 @@ function ChartCanvas() {
       ctx.textBaseline = "middle";
 
       // “BTC”
-      ctx.font = `600 8px Montserrat, ${PRICE_FONT_FAMILY}`;
+      ctx.font = `600 8px "Montserrat", ${PRICE_FONT_FAMILY}`;
       const btcW = ctx.measureText("BTC").width;
 
       // 价格（与你现有的 priceLabelDigits 对齐）
       const priceText = formatPrice(price, CONFIG.priceLabelDigits);
-      ctx.font = `800 14px Montserrat, ${PRICE_FONT_FAMILY}`;
+      ctx.font = `800 14px "Montserrat", ${PRICE_FONT_FAMILY}`;
       const priceW = ctx.measureText(priceText).width;
 
       // 箭头尺寸 & 额外内距
@@ -372,13 +373,13 @@ function ChartCanvas() {
 
       // 写入“BTC”
       let cursorX = badgeX + BADGE_PAD_X;
-      ctx.font = `600 12px Montserrat, ${PRICE_FONT_FAMILY}`;
+      ctx.font = `600 9px "Montserrat", ${PRICE_FONT_FAMILY}`;
       ctx.fillStyle = "#FFFFFF";
       ctx.fillText("BTC", cursorX, badgeY);
 
       // 价格
       cursorX += btcW + BADGE_GAP;
-      ctx.font = `800 14px Montserrat, ${PRICE_FONT_FAMILY}`;
+      ctx.font = `700 14px "Montserrat", ${PRICE_FONT_FAMILY}`;
       ctx.fillText(priceText, cursorX, badgeY);
 
       // 箭头
