@@ -17,14 +17,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
 
   return (
     <section
-      // className={`overlay ${isFull ? "fixed inset-0 z-[999]" : "relative"} `}
-      // style={{
-      //   display: "flex",
-      //   alignItems: "center",
-      //   justifyContent: "center",
-      //   minHeight: isFull ? "100vh" : "80vh",
-      // }}
-
       className={`overlay ${isFull ? "fixed inset-0 z-[999]" : "relative"}`}
       style={{
         display: "flex",
@@ -35,8 +27,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
         paddingTop: "80px",        // 控制整体距离顶部的位置
       }}
     >
-
-
       {/* 背景 */}
       {isFull && (
         <div
@@ -154,20 +144,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
               textDecoration: "none",
               transition: "all 0.2s ease",
             }}
-            // onMouseEnter={(e) => {
-            //   Object.assign((e.currentTarget as HTMLElement).style, {
-            //     padding: "12px 21px",
-            //     background: "#FFF",
-            //     color: "#000", // hover时改成黑色文字更清晰
-            //   });
-            // }}
-            // onMouseLeave={(e) => {
-            //   Object.assign((e.currentTarget as HTMLElement).style, {
-            //     padding: "12px 28px",
-            //     background: "rgba(0, 0, 0, 0.40)",
-            //     color: "#FFF",
-            //   });
-            // }}
           >
             Join Waitlist
           </a>
@@ -192,20 +168,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
               textDecoration: "none",
               transition: "all 0.2s ease",
             }}
-            // onMouseEnter={(e) => {
-            //   Object.assign((e.currentTarget as HTMLElement).style, {
-            //     padding: "12px 21px",
-            //     background: "#FFF",
-            //     color: "#000", // hover时改成黑色文字更清晰
-            //   });
-            // }}
-            // onMouseLeave={(e) => {
-            //   Object.assign((e.currentTarget as HTMLElement).style, {
-            //     padding: "12px 28px",
-            //     background: "rgba(0, 0, 0, 0.40)",
-            //     color: "#FFF",
-            //   });
-            // }}
           >
             Read Docs
           </a>

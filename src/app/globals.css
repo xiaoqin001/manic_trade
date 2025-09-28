@@ -53,12 +53,12 @@ body {
 }
 
 @media (max-width: 900px) {
-  .grid3 {
-    grid-template-columns: 1fr;
+  .container{
+    padding: 0 12px;
   }
-
-  .hide-md {
-    display: none;
+  .grid3 {
+    grid-template-columns: 1fr 1fr; /* 两列占满 */
+    gap: 12px;                      /* 移动端更小的间距 */
   }
 }
 
