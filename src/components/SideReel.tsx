@@ -7,10 +7,7 @@ type Props = {
   width?: number;     // 列宽（像素）
 };
 
-/**
- * 循环滚动列（使用 public/reels/r1.png ... r12.png）
- * 不依赖任何样式库，只用全局 CSS 类。
- */
+
 export default function SideReel({ reverse, speedSec = 20, width = 220 }: Props) {
   const imgs = useMemo(
     () => Array.from({ length: 12 }, (_, i) => `/reels/r${i + 1}.png`),

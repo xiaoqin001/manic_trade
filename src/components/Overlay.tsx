@@ -146,28 +146,28 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
               gap: "10px",
               borderRadius: "12px",
               border: "1px solid #FFF",
-              background: "rgba(0, 0, 0, 0.40)",
+              background: "#FFF",
               boxShadow: "0 0 12px 0 rgba(255, 255, 255, 0.24)",
-              color: "#FFF",
+              color: "#000",
               fontWeight: 600,
               fontSize: "20px",
               textDecoration: "none",
               transition: "all 0.2s ease",
             }}
-            onMouseEnter={(e) => {
-              Object.assign((e.currentTarget as HTMLElement).style, {
-                padding: "12px 21px",
-                background: "#FFF",
-                color: "#000", // hover时改成黑色文字更清晰
-              });
-            }}
-            onMouseLeave={(e) => {
-              Object.assign((e.currentTarget as HTMLElement).style, {
-                padding: "12px 28px",
-                background: "rgba(0, 0, 0, 0.40)",
-                color: "#FFF",
-              });
-            }}
+            // onMouseEnter={(e) => {
+            //   Object.assign((e.currentTarget as HTMLElement).style, {
+            //     padding: "12px 21px",
+            //     background: "#FFF",
+            //     color: "#000", // hover时改成黑色文字更清晰
+            //   });
+            // }}
+            // onMouseLeave={(e) => {
+            //   Object.assign((e.currentTarget as HTMLElement).style, {
+            //     padding: "12px 28px",
+            //     background: "rgba(0, 0, 0, 0.40)",
+            //     color: "#FFF",
+            //   });
+            // }}
           >
             Join Waitlist
           </a>
@@ -192,20 +192,20 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
               textDecoration: "none",
               transition: "all 0.2s ease",
             }}
-            onMouseEnter={(e) => {
-              Object.assign((e.currentTarget as HTMLElement).style, {
-                padding: "12px 21px",
-                background: "#FFF",
-                color: "#000", // hover时改成黑色文字更清晰
-              });
-            }}
-            onMouseLeave={(e) => {
-              Object.assign((e.currentTarget as HTMLElement).style, {
-                padding: "12px 28px",
-                background: "rgba(0, 0, 0, 0.40)",
-                color: "#FFF",
-              });
-            }}
+            // onMouseEnter={(e) => {
+            //   Object.assign((e.currentTarget as HTMLElement).style, {
+            //     padding: "12px 21px",
+            //     background: "#FFF",
+            //     color: "#000", // hover时改成黑色文字更清晰
+            //   });
+            // }}
+            // onMouseLeave={(e) => {
+            //   Object.assign((e.currentTarget as HTMLElement).style, {
+            //     padding: "12px 28px",
+            //     background: "rgba(0, 0, 0, 0.40)",
+            //     color: "#FFF",
+            //   });
+            // }}
           >
             Read Docs
           </a>
