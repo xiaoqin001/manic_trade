@@ -78,6 +78,7 @@ body {
     border-radius: 0 !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+    border-color: transparent !important;
   }
 
 
@@ -119,12 +120,14 @@ body {
   .cardContent,
   .chartContainer,
   .chartWrap {
-    overflow: visible !important;               /* 不创建内层滚动条 */
-    -webkit-overflow-scrolling: auto !important;/* iOS 不要动量滚动 */
-    max-height: none !important;                /* 防止高度限制触发滚动 */
+    overflow: visible !important;
+    /* 不创建内层滚动条 */
+    -webkit-overflow-scrolling: auto !important;
+    /* iOS 不要动量滚动 */
+    max-height: none !important;
+    /* 防止高度限制触发滚动 */
   }
 
-  /* 👍 确保手势是“竖向滚动”，交给父级 .overlay 处理 */
   .cbScaleBox,
   .chartWrap,
   .chartCanvas {
@@ -136,35 +139,50 @@ body {
     /* 占位高度 = 缩放后高度 + 底部安全区（可调变量） */
     height: calc(var(--chartH, 494px) * var(--cb-scale, 1) + var(--cb-extra, 10px));
     width: 100vw;
-    overflow-x: hidden;
+    overflow-x: visible;
     overflow-y: visible;
     /* 关键：不要把底部时间轴/边框裁掉 */
     position: relative;
   }
 
+  .cbScaleBox::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 1px solid #FFFFFF;
+    border-radius: 0;
+  }
+
+
   .cbScaleInner {
-    position: relative;               /* 让 left 生效 */
+    position: relative;
+    /* 让 left 生效 */
     left: 50%;
-    width: calc(100% / var(--cb-scale, 1)); /* 缩放前的“物理宽度” */
+    width: calc(100% / var(--cb-scale, 1));
+    /* 缩放前的“物理宽度” */
     transform-origin: top center;
     transform: translateX(-50%) scale(var(--cb-scale, 1));
     margin: 0;
   }
 
   .overlay {
+    height: 100dvh;
+    /* 用高度覆盖内联的 min-height:100vh */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-
+    /* 给底部留安全区，避免被浏览器工具栏遮住 */
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
 
-  /* Footer 不再绝对定位，进入文档流，整体高度才会超过 100vh 从而可滚动 */
+  /* Footer 在文档流中，底部加安全区余量 */
   .overlayFooter {
     position: static !important;
+    margin: 16px auto calc(24px + env(safe-area-inset-bottom)) !important;
     left: auto !important;
     bottom: auto !important;
     transform: none !important;
-    margin: 0px auto 19px !important;
   }
 
   /* 禁用 SideReel 及其内部的指针事件与触摸滚动 —— 手势交给 Overlay 处理 */
@@ -173,6 +191,7 @@ body {
     pointer-events: none !important;
     touch-action: none !important;
   }
+
 }
 
 /* ========== 中央内容卡片 ========== */
