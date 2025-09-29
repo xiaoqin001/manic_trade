@@ -154,7 +154,6 @@ body {
     border-radius: 0;
   }
 
-
   .cbScaleInner {
     position: relative;
     /* 让 left 生效 */
@@ -167,19 +166,26 @@ body {
   }
 
   .overlay {
+    min-height: 0 !important;
     height: 100dvh;
-    /* 用高度覆盖内联的 min-height:100vh */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    /* 给底部留安全区，避免被浏览器工具栏遮住 */
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      max(24px, env(safe-area-inset-bottom, 0px))
+      + var(--bottom-ui-offset, 0px)
+    );
+  }
+
+    @supports (height: 100svh) {
+    .overlay { height: 100svh; }
   }
 
   /* Footer 在文档流中，底部加安全区余量 */
   .overlayFooter {
     position: static !important;
-    margin: 16px auto calc(24px + env(safe-area-inset-bottom)) !important;
+    /* margin: 16px auto calc(24px + env(safe-area-inset-bottom)) !important; */
+    margin: 16px auto calc(24px + env(safe-area-inset-bottom, 0px) + var(--bottom-ui-offset, 0px)) !important;
     left: auto !important;
     bottom: auto !important;
     transform: none !important;

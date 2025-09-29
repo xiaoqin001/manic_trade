@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef} from "react";
 import { Montserrat } from "next/font/google";
 import CenterBoard from "@/components/ChartCanvas";
 
@@ -33,6 +33,36 @@ const montserrat = Montserrat({
 export default function Overlay({ mode = "hero" }: OverlayProps) {
   const isFull = mode === "fullscreen";
   const isMobile = useMediaQuery("(max-width: 900px)");
+    const rootRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+    if (!isMobile) return;
+    const el = rootRef.current;
+    if (!el || typeof window === 'undefined') return;
+
+    const update = () => {
+      const ih = window.innerHeight || 0;
+      const vv = window.visualViewport?.height || ih;
+      const offset = Math.max(0, Math.round(ih - vv)); // 工具栏/键盘占用的像素
+      el.style.setProperty('--bottom-ui-offset', `${offset}px`);
+    };
+
+    update();
+    window.addEventListener('resize', update, { passive: true });
+    window.addEventListener('scroll', update, { passive: true });
+
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', update);
+    vv?.addEventListener('scroll', update);
+
+    return () => {
+      window.removeEventListener('resize', update as any);
+      window.removeEventListener('scroll', update as any);
+      vv?.removeEventListener('resize', update as any);
+      vv?.removeEventListener('scroll', update as any);
+    };
+  }, [isMobile]);
+
 
   type CbBoxStyle = React.CSSProperties & {
     '--chartH'?: string;
@@ -50,6 +80,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
 
   return (
     <section
+    ref={rootRef}
       className={`overlay ${isFull ? "fixed inset-0 z-[999]" : "relative"}`}
       style={{
         display: "flex",
