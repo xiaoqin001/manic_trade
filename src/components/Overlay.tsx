@@ -46,7 +46,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
     '--cb-extra': '12px',  // 底部安全区
   };
 
-  // SSR 安全：首次挂载前不渲染，避免水合差异
   if (isMobile === null) return null;
 
   return (
@@ -55,13 +54,14 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: isMobile ? "stretch" : "center",
         justifyContent: "flex-start",
         minHeight: isFull ? "100vh" : "80vh",
         paddingTop: "80px",
+        overflowY: isMobile ? "auto" : undefined,
+        WebkitOverflowScrolling: isMobile ? "touch" : undefined,
       }}
     >
-      {/* 背景（保持不变） */}
       {isFull && (
         <div
           className="overlayBg"
@@ -74,7 +74,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
         />
       )}
 
-      {/* 左上角品牌 Logo —— 仅 Web 端显示；Mobile 端移除 */}
       {!isMobile && (
         <div>
           <img
@@ -236,8 +235,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
         </div>
       )}
 
-
-      {/* ===== Mobile 端：在按钮与底部之间插入 CenterBoard ===== */}
       {isMobile && (
         <div>
           <a
@@ -360,12 +357,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
           <div
             className="overlayChartWrap fullBleed"
             style={{
-              // width: "min(880px, 92vw)",
-              // margin: "24px auto 12px",
-              // padding: "0 0px",
-              // zIndex: 10,
-
-              margin: "24px 0 12px",
+              margin: "36px 0 36px",
               padding: 0,
               zIndex: 10,
             }}
@@ -377,10 +369,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
               <div className="cbScaleInner">
 
                 <CenterBoard
-                  // heightPx={253}       // ← 调“高度”：数值（px）
-                  // vCols={9}            // ← 调“纵向格子数量”（列数）
-                  // hCells={4}           // ← 调“横向完整格数量”（决定横线条数 = hCells+1）
-                  bgColor="#100F17"    // ← 调“背景颜色”
+                  bgColor="#100F17"
                 />
               </div>
             </div>
@@ -388,15 +377,16 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
           <div
             className="overlayFooter"
             style={{
-              position: "absolute",
-              bottom: 24,
-              left: "50%",
-              transform: "translateX(-50%)",
+              position: "static",
+              bottom: "auto",
+              left: "auto",
+              transform: "none",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               gap: "21px",
               zIndex: 10,
+              margin: "16px auto 24px",
             }}
           >
             <img
@@ -413,7 +403,6 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
         </div>
       )}
 
-      {/* 底部 slogan + copyright（保持不变） */}
 
     </section>
   );

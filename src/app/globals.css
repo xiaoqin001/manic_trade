@@ -74,7 +74,7 @@ body {
   /* 仅在 Overlay 里的图表收紧上下外边距 */
   .overlayChartWrap .card {
     /* 覆盖原先的 clamp 公式，直接固定更小的间距 */
-    margin: 10px 0px 12px 0px;
+    margin: 0px 0px 0px 0px;
     border-radius: 0 !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
@@ -95,6 +95,7 @@ body {
     max-width: none !important;
     position: relative;
 
+    z-index: 20;
   }
 
   .overlayChartWrap .cardContent {
@@ -112,6 +113,25 @@ body {
     padding-right: 0 !important;
   }
 
+  .overlayChartWrap,
+  .cbScaleBox,
+  .card,
+  .cardContent,
+  .chartContainer,
+  .chartWrap {
+    overflow: visible !important;               /* 不创建内层滚动条 */
+    -webkit-overflow-scrolling: auto !important;/* iOS 不要动量滚动 */
+    max-height: none !important;                /* 防止高度限制触发滚动 */
+  }
+
+  /* 👍 确保手势是“竖向滚动”，交给父级 .overlay 处理 */
+  .cbScaleBox,
+  .chartWrap,
+  .chartCanvas {
+    touch-action: pan-y;
+  }
+
+
   .cbScaleBox {
     /* 占位高度 = 缩放后高度 + 底部安全区（可调变量） */
     height: calc(var(--chartH, 494px) * var(--cb-scale, 1) + var(--cb-extra, 10px));
@@ -123,9 +143,26 @@ body {
   }
 
   .cbScaleInner {
-    width: calc(100% / var(--cb-scale, 1));
-    transform: scale(var(--cb-scale, 1));
-    transform-origin: top left;
+    position: relative;               /* 让 left 生效 */
+    left: 50%;
+    width: calc(100% / var(--cb-scale, 1)); /* 缩放前的“物理宽度” */
+    transform-origin: top center;
+    transform: translateX(-50%) scale(var(--cb-scale, 1));
+    margin: 0;
+  }
+
+  .overlay {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Footer 不再绝对定位，进入文档流，整体高度才会超过 100vh 从而可滚动 */
+  .overlayFooter {
+    position: static !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    margin: 0px auto 19px !important;
   }
 
 }
