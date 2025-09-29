@@ -154,6 +154,8 @@ body {
   .overlay {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+
   }
 
   /* Footer 不再绝对定位，进入文档流，整体高度才会超过 100vh 从而可滚动 */
@@ -165,6 +167,12 @@ body {
     margin: 0px auto 19px !important;
   }
 
+  /* 禁用 SideReel 及其内部的指针事件与触摸滚动 —— 手势交给 Overlay 处理 */
+  .side,
+  .side * {
+    pointer-events: none !important;
+    touch-action: none !important;
+  }
 }
 
 /* ========== 中央内容卡片 ========== */
