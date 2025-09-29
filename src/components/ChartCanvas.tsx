@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useRef } from "react";
 
+type ChartProps = {
+  heightPx?: number;   // 高度（仅 mobile 用）
+  vCols?: number;      // 纵向格子（列）数量
+  hCells?: number;     // 横向“完整格”数量（决定横线数量）
+  bgColor?: string;    // 卡片内容背景色（只改 Overlay 的 mobile）
+};
+
 /** ===== 布局与网格 ===== */
 const PANEL_W = 142.5;           // 右侧静态面板宽度（需与 .right_panel 一致）
 const CHART_H = 494;             // 中间区域高度（需与 CSS 一致）
@@ -135,9 +142,12 @@ const quantizeToStep = (v: number, step = PRICE_STEP) =>
   Math.round(v / step) * step;
 
 /** ================= Chart ================= */
-function ChartCanvas() {
+function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  const VCOLS = vCols ?? V_COLS;
+  const HCELLS = hCells ?? H_FULL_CELLS;
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -169,7 +179,7 @@ function ChartCanvas() {
     let pxPerSec = CONFIG.pxPerSec;
     function computePxPerSec() {
       const chartW = canvas.clientWidth - PANEL_W;
-      const visibleSec = V_COLS * TIME_PER_COL_SEC;
+      const visibleSec = VCOLS * TIME_PER_COL_SEC;
       pxPerSec = chartW / visibleSec;
     }
 
@@ -318,7 +328,7 @@ function ChartCanvas() {
       ctx.textBaseline = "alphabetic";
       ctx.font = `normal ${PRICE_FONT_SIZE}px ${PRICE_FONT_FAMILY}`;
 
-      const parts = H_FULL_CELLS + 1; // 5 条线（上下半格 + 中间4整格）
+      const parts = HCELLS + 1; // 5 条线（上下半格 + 中间4整格）
       for (let i = 0; i < parts; i++) {
         const frac = (i + 0.5) / parts;       // 0.5/5, 1.5/5, ... 4.5/5
         // 先按比例求值 → 再量化到 0.02 → 再把线画在量化后的值上（保证数值与线一致）
@@ -499,7 +509,12 @@ function ChartCanvas() {
     <div
       ref={wrapRef}
       className="chartWrap"
-      style={{ position: "relative", width: "100%", height: `${CHART_H}px` }}
+      style={{ position: "relative", width: "100%",
+        // height: `${CHART_H}px`
+      height: heightPx
+          ? `${heightPx}px`
+          : `var(--chartH, ${CHART_H}px)`,
+      }}
     >
       <canvas ref={canvasRef} className="chartCanvas" />
       {/* 右侧静态面板：上/下/右贴边 */}
@@ -522,12 +537,12 @@ function ChartCanvas() {
 }
 
 /** ================= 包装成一个 Section（保持边框不透明、内容 60% 透明） ================= */
-export default function CenterBoard() {
+export default function CenterBoard(props: ChartProps) {
   return (
     <section className="card">
-      <div className="cardContent">
+      <div className="cardContent" style={{ background: props.bgColor }}>
         <div className="chartContainer">
-          <ChartCanvas />
+          <ChartCanvas  {...props}/>
         </div>
       </div>
     </section>

@@ -52,14 +52,82 @@ body {
   gap: var(--rail);
 }
 
+/* 可选：Overlay 中插入图表的容器样式 */
+.overlayChartWrap {
+  width: min(880px, 92vw);
+  margin: 24px auto 12px;
+  padding: 0 12px;
+}
+
 @media (max-width: 900px) {
-  .container{
+  .container {
     padding: 0 12px;
   }
+
   .grid3 {
-    grid-template-columns: 1fr 1fr; /* 两列占满 */
-    gap: 12px;                      /* 移动端更小的间距 */
+    grid-template-columns: 1fr 1fr;
+    /* 两列占满 */
+    gap: 12px;
+    /* 移动端更小的间距 */
   }
+
+  /* 仅在 Overlay 里的图表收紧上下外边距 */
+  .overlayChartWrap .card {
+    /* 覆盖原先的 clamp 公式，直接固定更小的间距 */
+    margin: 10px 0px 12px 0px;
+    border-radius: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+
+  .overlayChartWrap {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* 让容器真正“满屏”——忽略父级任何左右 padding */
+  .overlayChartWrap.fullBleed {
+    width: 100vw;
+    /* 占满视口宽度 */
+    max-width: none !important;
+    position: relative;
+
+  }
+
+  .overlayChartWrap .cardContent {
+    opacity: 1 !important;
+    /* 可选：如果想强制用传入色以外的默认色，也可以同时指定 */
+    /* background: var(--cb-bg, #100F17) !important; */
+  }
+
+  /* 去掉图表内部常见的水平 padding（若存在） */
+  .overlayChartWrap .card>*,
+  .overlayChartWrap .chartWrap,
+  .overlayChartWrap .chartBody,
+  .overlayChartWrap .chartInner {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .cbScaleBox {
+    /* 占位高度 = 缩放后高度 + 底部安全区（可调变量） */
+    height: calc(var(--chartH, 494px) * var(--cb-scale, 1) + var(--cb-extra, 10px));
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: visible;
+    /* 关键：不要把底部时间轴/边框裁掉 */
+    position: relative;
+  }
+
+  .cbScaleInner {
+    width: calc(100% / var(--cb-scale, 1));
+    transform: scale(var(--cb-scale, 1));
+    transform-origin: top left;
+  }
+
 }
 
 /* ========== 中央内容卡片 ========== */
@@ -74,10 +142,7 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
   overflow: hidden;
   margin:
-    clamp(64px, calc((100vh - var(--chartH)) * (1 - var(--vBias))), 220px)
-    10px
-    clamp(56px, calc((100vh - var(--chartH)) * var(--vBias)), 200px)
-    10px;
+    clamp(64px, calc((100vh - var(--chartH)) * (1 - var(--vBias))), 220px) 10px clamp(56px, calc((100vh - var(--chartH)) * var(--vBias)), 200px) 10px;
 }
 
 /* 只让卡片内容透明，边框不变 */
@@ -97,14 +162,17 @@ body {
 /* （若你此前在 .card::before 或 .cardContent::before 里画格子，请不要再启用） */
 
 /* ========== 图表 + 面板 容器 ========== */
-.chartContainer {
+/* .chartContainer {
   position: relative;
   height: 494px;
-  /* 统一高度（如需自适应可改为 aspect-ratio 方案） */
-  /* padding-right: 142.5px;   */
-  /* 右侧面板宽度，需与组件里 PANEL_W 保持一致 */
   z-index: 1;
-  /* 在内容背景之上 */
+} */
+
+.chartContainer {
+  position: relative;
+  height: var(--chartH, 494px);
+  /* ← 原来是 494px */
+  z-index: 1;
 }
 
 /* ChartCanvas 包裹与画布占满父容器 */
@@ -279,7 +347,8 @@ body {
   position: absolute;
   inset: 0;
   background: url("/Rectangle%2042.png") center/cover no-repeat;
-  pointer-events: none; /* 不挡下面的交互（如果需要可去掉） */
+  pointer-events: none;
+  /* 不挡下面的交互（如果需要可去掉） */
 }
 
 /* .overlayBg {
