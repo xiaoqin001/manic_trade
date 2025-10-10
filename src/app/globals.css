@@ -207,7 +207,7 @@ body {
   /* margin: 176px 10px 104px 10px; */
   border-radius: 16px;
   backdrop-filter: blur(6px);
-  border: 1px solid #FFFFFF;
+  border: 1px solid #388DDD;
   /* 边框保持100%不透明 */
   box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
   overflow: hidden;
@@ -222,9 +222,6 @@ body {
   inset: 1px;
   display: block;
   background: #111111;
-  /* ← 直接用纯色，不再 color-mix */
-  opacity: .6;
-  /* ← 内容 60% 透明 */
 }
 
 
@@ -261,17 +258,26 @@ body {
 }
 
 /* 右侧面板贴边，位于内容层（会随 .cardContent 一起透明） */
-.right_panel {
+/* .right_panel {
   position: absolute;
   inset: 0 0 0 auto;
   width: 142.5px;
-  /* 与 chartContainer 的 padding-right 对齐 */
   height: 100%;
   object-fit: fill;
   object-position: right center;
   pointer-events: none;
   z-index: 2;
-  /* 在内容背景之上、在图线之下或同层均可 */
+} */
+
+.right_panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  /* width: 142.5px;   ← 删掉 */
+  height: 100%;
+  object-fit: contain;   /* ← 与 TSX 保持一致 */
+  object-position: right center;
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* ========== 可能存在的右侧表单/按钮（若不用可忽略） ========== */
@@ -350,6 +356,7 @@ body {
 .side {
   position: relative;
   height: 100vh;
+  /* min-height: 100vh; */
   overflow: hidden;
 }
 
@@ -360,7 +367,7 @@ body {
   animation-iteration-count: infinite;
 }
 
-@keyframes reel-scroll {
+/* @keyframes reel-scroll {
   0% {
     transform: translateY(0);
   }
@@ -368,8 +375,11 @@ body {
   100% {
     transform: translateY(-50%);
   }
+} */
 
-  /* 内容加倍，无缝滚动 */
+@keyframes reel-scroll {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(calc(var(--travel, 1000px) * -1)); }
 }
 
 .reelItem {
@@ -390,6 +400,7 @@ body {
   /* width: 180px; */
   height: auto;
   opacity: 0.4;
+  object-fit: contain;
   /* 40% */
 }
 

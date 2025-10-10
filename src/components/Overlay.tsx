@@ -5,7 +5,6 @@ import React, { useEffect, useState, useRef} from "react";
 import { Montserrat } from "next/font/google";
 import CenterBoard from "@/components/ChartCanvas";
 
-/** 媒体查询 hook：避免 SSR 水合不一致，仅客户端决定是否为 mobile */
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState<boolean | null>(null);
   useEffect(() => {
@@ -27,42 +26,10 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
 });
 
-// ① 在组件内（return 之前）先声明一个类型 + 变量
-
-
 export default function Overlay({ mode = "hero" }: OverlayProps) {
   const isFull = mode === "fullscreen";
   const isMobile = useMediaQuery("(max-width: 900px)");
     const rootRef = useRef<HTMLElement | null>(null);
-
-  //   useEffect(() => {
-  //   if (!isMobile) return;
-  //   const el = rootRef.current;
-  //   if (!el || typeof window === 'undefined') return;
-
-  //   const update = () => {
-  //     const ih = window.innerHeight || 0;
-  //     const vv = window.visualViewport?.height || ih;
-  //     const offset = Math.max(0, Math.round(ih - vv)); // 工具栏/键盘占用的像素
-  //     el.style.setProperty('--bottom-ui-offset', `${offset}px`);
-  //   };
-
-  //   update();
-  //   window.addEventListener('resize', update, { passive: true });
-  //   window.addEventListener('scroll', update, { passive: true });
-
-  //   const vv = window.visualViewport;
-  //   vv?.addEventListener('resize', update);
-  //   vv?.addEventListener('scroll', update);
-
-  //   return () => {
-  //     window.removeEventListener('resize', update as any);
-  //     window.removeEventListener('scroll', update as any);
-  //     vv?.removeEventListener('resize', update as any);
-  //     vv?.removeEventListener('scroll', update as any);
-  //   };
-  // }, [isMobile]);
-
 
 useEffect(() => {
   if (!isMobile) return;
@@ -159,7 +126,7 @@ useEffect(() => {
 
 
           <a
-            href="https://twitter.com/"
+            href="https://x.com/manic_trad54819"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Twitter"

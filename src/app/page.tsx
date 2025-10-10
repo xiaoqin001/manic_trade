@@ -29,23 +29,26 @@ export default function Page() {
           {isMobile ? (
             // ===== Mobile：仅两列 SideReel，充满屏幕宽度 =====
             <>
-              <SideReel speedSec={22} width="100%" />
-              <SideReel reverse speedSec={26} width="100%" />
+              {/* <SideReel speedSec={22} width="100%" />
+              <SideReel reverse speedSec={26} width="100%" /> */}
+              <SideReel pxPerSec={180} width="100%" />
+              <SideReel reverse pxPerSec={180} width="100%" />
             </>
           ) : (
             // ===== Desktop：左右 SideReel + 中间 CenterBoard =====
             <>
-              <SideReel speedSec={22} width={180} />
+              {/* <SideReel speedSec={22} width={180} /> */}
+              <SideReel pxPerSec={180} width={180} />
               <div>
                 <CenterBoard />
               </div>
-              <SideReel reverse speedSec={26} width={180} />
+              {/* <SideReel reverse speedSec={26} width={180} /> */}
+              <SideReel reverse pxPerSec={180} width={180} />
             </>
           )}
         </div>
       </div>
 
-      {/* 全屏蒙层 Overlay（如果移动端不需要可以自行移除或加条件） */}
       <Overlay mode="fullscreen" />
     </main>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ChartProps = {
   heightPx?: number;   // 高度（仅 mobile 用）
@@ -9,7 +9,7 @@ type ChartProps = {
 };
 
 /** ===== 布局与网格 ===== */
-const PANEL_W = 142.5;           // 右侧静态面板宽度（需与 .right_panel 一致）
+const PANEL_W = 142.5;           // 右侧静态面板“初始估计宽度”（实际用动态 panelW 替代）
 const CHART_H = 494;             // 中间区域高度（需与 CSS 一致）
 const V_COLS = 13;               // 纵向格子数量（整屏列数）
 const TIME_PER_COL_SEC = 10;     // 每列代表的秒数
@@ -28,19 +28,6 @@ const PRICE_FONT_SIZE = 10;
 const PRICE_FONT_FAMILY = "Montserrat, ui-monospace, SFMono-Regular, Menlo, monospace";
 
 
-
-/** ===== 左上角时间 & 价格胶囊样式 ===== */
-const TL_MARGIN_X = 16;           // 左边距
-const TL_TIME_Y = 15;           // 时间文本 y
-const BADGE_Y = 49;           // 胶囊中心 y
-const BADGE_H = 28;           // 胶囊高度
-const BADGE_R = BADGE_H / 2;  // 胶囊圆角
-const BADGE_PAD_X = 14;           // 胶囊左右内边距
-const BADGE_GAP = 12;           // “BTC” 与价格之间的间距
-const BADGE_STROKE = "#FFFFFF";
-const BADGE_FILL = "rgba(255, 255, 255, 0.12)";
-const TIME_PADDING_TOP = 12; // 向下留 12px
-
 const TIME_TZ_LABEL = "UTC+9";    // 文案
 const TIME_TZ_NAME = "Asia/Tokyo"; // 用于格式化（东京=UTC+9）
 
@@ -50,49 +37,6 @@ function formatPrice(v: number, digits = 3) {
   const [int, frac] = num.split(".");
   const intFmt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return `$${intFmt}.${frac}`;
-}
-
-/** 时间格式化（UTC+9） */
-function formatTimeUTC9(ms: number) {
-  return new Date(ms).toLocaleTimeString(undefined, {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    timeZone: TIME_TZ_NAME,
-  }) + ` ${TIME_TZ_LABEL}`;
-}
-
-/** 画一个胶囊矩形 */
-function drawCapsule(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string, stroke: string) {
-  const r = h / 2, l = x, t = y - h / 2, rgt = x + w, btm = y + h / 2;
-  ctx.fillStyle = fill;
-  ctx.strokeStyle = stroke;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(l + r, t);
-  ctx.lineTo(rgt - r, t);
-  ctx.arcTo(rgt, t, rgt, t + r, r);
-  ctx.lineTo(rgt, btm - r);
-  ctx.arcTo(rgt, btm, rgt - r, btm, r);
-  ctx.lineTo(l + r, btm);
-  ctx.arcTo(l, btm, l, btm - r, r);
-  ctx.lineTo(l, t + r);
-  ctx.arcTo(l, t, l + r, t, r);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-}
-
-/** 小三角（下拉箭头） */
-function drawTriangleDown(ctx: CanvasRenderingContext2D, cx: number, cy: number, s: number, color = "#FFF") {
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(cx - s / 2, cy - s / 4);
-  ctx.lineTo(cx + s / 2, cy - s / 4);
-  ctx.lineTo(cx, cy + s / 4);
-  ctx.closePath();
-  ctx.fill();
 }
 
 /** ===== 数值显示量化步长（价格标签按 0.02 递进） ===== */
@@ -146,6 +90,10 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
+  // ★ 右侧 demo 图：动态实际宽度
+  const panelImgRef = useRef<HTMLImageElement | null>(null);
+  const [panelW, setPanelW] = useState<number>(PANEL_W);
+
   const VCOLS = vCols ?? V_COLS;
   const HCELLS = hCells ?? H_FULL_CELLS;
 
@@ -162,7 +110,20 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
 
     // —— DPR & 尺寸 —— //
     const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+
+    // ★ 动态测量右侧图片宽度
+    const measurePanelWidth = () => {
+      const w = panelImgRef.current?.clientWidth ?? 0;
+      const next = Math.max(0, Math.round(w));
+      if (Math.abs(next - panelW) > 0) {
+        setPanelW(next);
+      }
+    };
+
     function resize() {
+      // 先量 panel 宽，避免先绘制再跳动
+      measurePanelWidth();
+
       const w = parent.clientWidth;
       const h = parent.clientHeight;
       canvas.width = Math.floor(w * dpr);
@@ -178,9 +139,9 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
     // —— 纵向列数固定：根据列数与每列秒数，动态计算 pxPerSec —— //
     let pxPerSec = CONFIG.pxPerSec;
     function computePxPerSec() {
-      const chartW = canvas.clientWidth - PANEL_W;
+      const chartW = canvas.clientWidth - panelW; // ★ 用动态 panelW
       const visibleSec = VCOLS * TIME_PER_COL_SEC;
-      pxPerSec = chartW / visibleSec;
+      pxPerSec = chartW > 0 ? chartW / visibleSec : CONFIG.pxPerSec;
     }
 
     // —— 价格状态 —— //
@@ -235,7 +196,7 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
         points.push({ t: curNowMs, v: vEMA });
 
         // 丢弃左侧超出
-        const chartW = canvas.clientWidth - PANEL_W;
+        const chartW = canvas.clientWidth - panelW; // ★
         const maxLeft = (chartW * CONFIG.nowXR) / pxPerSec * 1000 + 2000;
         const cutoff = curNowMs - maxLeft;
         while (points.length && points[0].t < cutoff) points.shift();
@@ -252,7 +213,7 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
       return h - ((v - yMin) / (yMax - yMin)) * h;
     };
     const tToPx = (tMs: number, nowMsVal: number) => {
-      const chartW = canvas.clientWidth - PANEL_W;
+      const chartW = canvas.clientWidth - panelW; // ★
       const nowX = chartW * CONFIG.nowXR;
       const dtSec = (nowMsVal - tMs) / 1000;
       return nowX - dtSec * pxPerSec;
@@ -284,7 +245,7 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
     // —— 网格 + 标签（格子随时间移动；价格标签量化到 0.02）—— //
     function drawGridAndLabels(nowMsVal: number) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
-      const chartW = w - PANEL_W;
+      const chartW = w - panelW; // ★
 
       // 保持列数
       computePxPerSec();
@@ -307,7 +268,9 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
         if (x < -60) break;
         ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, h); ctx.stroke();
         if (x >= 8 && x <= chartW - 8) {
-          const label = new Date(t).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          const label = new Date(t).toLocaleTimeString(undefined, {
+            hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit"
+          });
           ctx.fillText(label, x, h - 8);
         }
       }
@@ -316,13 +279,15 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
         if (x > w + 60) break;
         ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, h); ctx.stroke();
         if (x >= 8 && x <= chartW - 8) {
-          const label = new Date(t).toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          const label = new Date(t).toLocaleTimeString(undefined, {
+            hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit"
+          });
           ctx.fillText(label, x, h - 8);
         }
       }
 
       // 横向格 + 价格（与胶囊中心对齐，胶囊贴右；标签值量化到 0.02）
-      const priceAnchorX = chartW - CAPSULE_W / 2;
+      const priceAnchorX = chartW - CAPSULE_W / 2; // ★
 
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
@@ -338,69 +303,14 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
 
         // 画横线
         ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w, yy); ctx.stroke();
-        // 画价格标签（量化后，保留两位）
-        // ctx.fillText(vQ.toFixed(CONFIG.priceLabelDigits), priceAnchorX, yy - 2);
+        // 画价格标签（量化后，保留两位/格式化千分位）
         ctx.fillText(formatPrice(vQ, CONFIG.priceLabelDigits), priceAnchorX, yy - 2);
       }
     }
 
-    /** 左上角：时间 + “BTC 价格”胶囊 */
-    function drawTopLeftBadge(ctx: CanvasRenderingContext2D, lastMs: number, price: number) {
-      // 时间
-      ctx.font = `600 12px ${TIME_FONT_FAMILY}`;
-      ctx.fillStyle = "#666666";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
-
-
-      ctx.fillText(formatTimeUTC9(lastMs), TL_MARGIN_X, TL_TIME_Y + TIME_PADDING_TOP);
-
-      // 文字度量
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-
-      // “BTC”
-      ctx.font = `600 8px "Montserrat", ${PRICE_FONT_FAMILY}`;
-      const btcW = ctx.measureText("BTC").width;
-
-      // 价格（与你现有的 priceLabelDigits 对齐）
-      const priceText = formatPrice(price, CONFIG.priceLabelDigits);
-      ctx.font = `800 14px "Montserrat", ${PRICE_FONT_FAMILY}`;
-      const priceW = ctx.measureText(priceText).width;
-
-      // 箭头尺寸 & 额外内距
-      const caretW = 10;
-
-      // 胶囊宽度
-      const badgeW = BADGE_PAD_X + btcW + BADGE_GAP + priceW + BADGE_GAP + caretW + BADGE_PAD_X;
-
-      // 胶囊位置（贴左边距 TL_MARGIN_X）
-      const badgeX = TL_MARGIN_X;
-      const badgeY = BADGE_Y;
-
-      // 绘制胶囊
-      drawCapsule(ctx, badgeX, badgeY, badgeW, BADGE_H, BADGE_FILL, BADGE_STROKE);
-
-      // 写入“BTC”
-      let cursorX = badgeX + BADGE_PAD_X;
-      ctx.font = `600 9px "Montserrat", ${PRICE_FONT_FAMILY}`;
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillText("BTC", cursorX, badgeY);
-
-      // 价格
-      cursorX += btcW + BADGE_GAP;
-      ctx.font = `700 14px "Montserrat", ${PRICE_FONT_FAMILY}`;
-      ctx.fillText(priceText, cursorX, badgeY);
-
-      // 箭头
-      const caretX = badgeX + badgeW - BADGE_PAD_X - caretW / 2;
-      drawTriangleDown(ctx, caretX, badgeY, caretW, "#FFFFFF");
-    }
-
-
     function drawPrice(nowMsVal: number) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
-      const chartW = w - PANEL_W;
+      const chartW = w - panelW; // ★
       if (points.length < 2) return;
 
       // 视口内点 → 像素点
@@ -434,7 +344,7 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
       const label = `$${lastLabelV.toFixed(CONFIG.priceLabelDigits)}`;
 
       // 与价格刻度共用锚点；胶囊紧贴右缘
-      const priceAnchorX = chartW - CAPSULE_W / 2;
+      const priceAnchorX = chartW - CAPSULE_W / 2; // ★
 
       // 胶囊几何
       const boxW = CAPSULE_W;
@@ -443,8 +353,16 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
       const boxX = priceAnchorX - boxW / 2;
       const boxY = lastY - boxH / 2;
 
+
+      // 当前价水平实线
+      ctx.strokeStyle = "#2BB20A";
+      ctx.beginPath();
+      ctx.moveTo(0, lastY);
+      ctx.lineTo(w, lastY);
+      ctx.stroke();
+
       // 胶囊背景
-      ctx.fillStyle = "#E0E0E0";
+      ctx.fillStyle = "#2BB20A";
       ctx.beginPath();
       ctx.moveTo(boxX + radius, boxY);
       ctx.lineTo(boxX + boxW - radius, boxY);
@@ -465,29 +383,26 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
       ctx.textBaseline = "middle";
       ctx.fillText(label, priceAnchorX, boxY + boxH / 2);
 
-      // 当前价水平虚线
-      // ctx.setLineDash([6, 6]);
-      // ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      // ctx.beginPath(); ctx.moveTo(0, lastY); ctx.lineTo(w, lastY); ctx.stroke();
-      // ctx.setLineDash([]);
-      ctx.strokeStyle = "#E0E0E0";
-      ctx.beginPath();
-      ctx.moveTo(0, lastY);
-      ctx.lineTo(w, lastY);
-      ctx.stroke();
+
 
       // “现在线”
       const nowX = chartW * CONFIG.nowXR;
-      ctx.strokeStyle = "#5FC5FF";
+      ctx.strokeStyle = "#FFF614";
       ctx.beginPath(); ctx.moveTo(nowX + 0.5, 0); ctx.lineTo(nowX + 0.5, h); ctx.stroke();
+
+      // 光晕（先画在底层）
+      ctx.beginPath();
+      ctx.arc(nowX, lastY, 18, 0, Math.PI * 2);         // 光晕半径可调 16~24
+      ctx.fillStyle = "rgba(95,197,255,0.24)";          // #5FC5FF3D
+      ctx.fill();
 
       // 当前价圆点
       ctx.beginPath(); ctx.arc(nowX, lastY, 5, 0, Math.PI * 2);
       ctx.fillStyle = "#5AC8FA"; ctx.fill();
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = "#5FC5FF"; ctx.lineWidth = 1; ctx.stroke();
 
-      drawTopLeftBadge(ctx, last.t, lastLabelV);
-
+      // 左上角时间 + BTC 胶囊
+      // drawTopLeftBadge(ctx, last.t, lastLabelV);
     }
 
     // —— 主循环 —— //
@@ -502,34 +417,64 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
     }
     requestAnimationFrame(frame);
 
-    return () => { running = false; ro.disconnect(); };
-  }, []);
+    // ★ 右图加载/错误后重新测量并 resize
+    const img = panelImgRef.current;
+    const onImgLoadOrErr = () => { measurePanelWidth(); resize(); };
+    if (img) {
+      if (img.complete) onImgLoadOrErr();
+      else {
+        img.addEventListener("load", onImgLoadOrErr, { once: true });
+        img.addEventListener("error", onImgLoadOrErr, { once: true });
+      }
+    }
+
+    // 视口变化兜底
+    const onWinResize = () => resize();
+    window.addEventListener("resize", onWinResize);
+
+    return () => {
+      running = false;
+      ro.disconnect();
+      window.removeEventListener("resize", onWinResize);
+      if (img) {
+        img.removeEventListener("load", onImgLoadOrErr);
+        img.removeEventListener("error", onImgLoadOrErr);
+      }
+    };
+  }, [panelW, vCols, hCells]); // ★ 依赖 panelW：图片宽度变化会重建尺寸/pxPerSec/重绘
 
   return (
     <div
       ref={wrapRef}
       className="chartWrap"
-      style={{ position: "relative", width: "100%",
-        // height: `${CHART_H}px`
-      height: heightPx
+      style={{
+        position: "relative",
+        width: "100%",
+        height: heightPx
           ? `${heightPx}px`
           : `var(--chartH, ${CHART_H}px)`,
       }}
     >
       <canvas ref={canvasRef} className="chartCanvas" />
-      {/* 右侧静态面板：上/下/右贴边 */}
+
+      {/* 右侧静态面板：高 = chart 高；宽自动，保持比例；实际占位宽度由浏览器计算 */}
       <img
-        src="/right_panel.png"
+        ref={panelImgRef}
+        src="/game_demo.png"
         alt=""
         className="right_panel"
         style={{
           position: "absolute",
           inset: "0 0 0 auto",
-          width: `${PANEL_W}px`,
-          height: "100%",
-          objectFit: "fill",
+          height: "100%",     // 高度与 chart 一致
+          width: "auto",      // 宽度按比例自适应
+          objectFit: "contain",
           objectPosition: "right center",
           pointerEvents: "none",
+          zIndex: 2,
+          borderLeft: "1px solid #FFFFFF",
+          // 如需限制最大宽度，可开启：
+          // maxWidth: "260px",
         }}
       />
     </div>
@@ -542,7 +487,7 @@ export default function CenterBoard(props: ChartProps) {
     <section className="card">
       <div className="cardContent" style={{ background: props.bgColor }}>
         <div className="chartContainer">
-          <ChartCanvas  {...props}/>
+          <ChartCanvas {...props} />
         </div>
       </div>
     </section>
