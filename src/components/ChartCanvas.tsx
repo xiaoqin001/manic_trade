@@ -130,7 +130,7 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
 
   function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
     const w = 12, h = 10;
-    ctx.fillStyle = "#6D242F";
+    ctx.fillStyle = "#C82F2F";
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);                // 尖端=价格点/渐变边界
     ctx.lineTo(tipX - w / 2, tipY - h);    // 底边
