@@ -61,8 +61,18 @@ body {
 }
 
 @media (max-width: 900px) {
+  :root {
+    --chartH: 330px;
+    /* 移动端图表更短 */
+  }
+
   .container {
     padding: 0 12px;
+  }
+
+  .container {
+    max-width: none;
+    padding: 10px;
   }
 
   .grid3 {
@@ -172,14 +182,13 @@ body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding-bottom: calc(
-      max(24px, env(safe-area-inset-bottom, 0px))
-      + var(--bottom-ui-offset, 0px)
-    );
+    padding-bottom: calc(max(24px, env(safe-area-inset-bottom, 0px)) + var(--bottom-ui-offset, 0px));
   }
 
-    @supports (height: 100svh) {
-    .overlay { height: 100svh; }
+  @supports (height: 100svh) {
+    .overlay {
+      height: 100svh;
+    }
   }
 
   /* Footer 在文档流中，底部加安全区余量 */
@@ -197,6 +206,118 @@ body {
   .side * {
     pointer-events: none !important;
     touch-action: none !important;
+  }
+
+
+  /* —— 移动端变量 —— */
+  :root {
+    --chartH: 330px;        /* 移动端图表更短 */
+    --m-pad-x: 28px;        /* 左右 padding */
+    --m-pad-y: 60px;        /* 上下 padding */
+  }
+
+  /* —— 容器与栅格：单列，满宽 —— */
+  .container {
+    max-width: none;
+    padding: 10px;          /* 保留一个小的页面内边距 */
+  }
+  .grid3 {
+    display: grid;
+    grid-template-columns: 1fr;  /* 单列 */
+    gap: 0;
+  }
+
+  /* —— 顶部背景卡片（mobileHero）：圆角 + 蓝边框 + 阴影 + 内边距 —— */
+  .mobileHero {
+    grid-column: 1 / -1;
+    position: relative;
+    width: 100%;
+    min-height: 100dvh;
+    background: url("/background_mobile.png") center top / cover no-repeat;
+
+    border: 1px solid #388DDD;
+    border-radius: 36px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+
+    padding: var(--m-pad-y) var(--m-pad-x);
+    box-sizing: border-box;
+  }
+
+  .mobileChartOnlyLeft {
+    position: absolute;
+    /* top 仍按你想要的上内边距控制（保留标题/提示空间） */
+    /* top: var(--m-pad-y); */
+    /* 关键：左右出血等于左右 padding 的负值 */
+    left: calc(-1 * var(--m-pad-x));
+    right: calc(-1 * var(--m-pad-x));
+    /* 高度仍由变量控制 */
+    /* height: var(--chartH); */
+    margin: 0;
+    padding: 0;
+  top: 0; /* 不留顶内边距 */
+  /* 并让高度加回去顶内边距这段（可选）*/
+  height: calc(var(--chartH) + var(--m-pad-y));
+  }
+
+  /* —— 避免 card 内部 1px 内缩影响贴顶 —— */
+  .mobileHero .card { margin: 0 !important; }
+  .mobileHero .cardContent { inset: 0 !important; }
+
+  /* —— 图表容器高度与变量一致 —— */
+  .mobileHero .chartContainer { height: var(--chartH) !important; }
+
+  /* —— 上划提示保留 —— */
+  .swipeHint {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,0.85);
+    font: 600 12px/1.2 "Montserrat", ui-sans-serif, system-ui;
+    pointer-events: none;
+    z-index: 5;
+    text-shadow: 0 1px 8px rgba(0,0,0,.35);
+  }
+  .swipeArrow {
+    width: 18px;
+    height: 28px;
+    border-left: 2px solid rgba(255,255,255,.9);
+    border-bottom: 2px solid rgba(255,255,255,.9);
+    transform: rotate(-45deg);
+    animation: swipeUp 1.2s ease-in-out infinite;
+  }
+  @keyframes swipeUp {
+    0%   { transform: translateY(0) rotate(-45deg);   opacity: .2; }
+    50%  { transform: translateY(-10px) rotate(-45deg); opacity: 1; }
+    100% { transform: translateY(0) rotate(-45deg);   opacity: .2; }
+  }
+
+
+    .overlayFooter {
+    position: absolute !important;
+    bottom: 24px !important;          /* 距背景底边 24px，可调 */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 21px;
+    z-index: 10;
+  }
+
+  /* 确保 overlay section 本身占满背景高度 */
+  .overlay {
+    position: relative;
+    height: 100dvh;                   /* 背景充满视口 */
+    overflow: hidden;
   }
 
 }
@@ -275,7 +396,8 @@ body {
   inset: 0 0 0 auto;
   /* width: 142.5px;   ← 删掉 */
   height: 100%;
-  object-fit: contain;   /* ← 与 TSX 保持一致 */
+  object-fit: contain;
+  /* ← 与 TSX 保持一致 */
   object-position: right center;
   pointer-events: none;
   z-index: 2;
@@ -368,7 +490,7 @@ body {
   animation-iteration-count: infinite;
 }
 
-/* @keyframes reel-scroll {
+@keyframes reel-scroll {
   0% {
     transform: translateY(0);
   }
@@ -376,12 +498,12 @@ body {
   100% {
     transform: translateY(-50%);
   }
-} */
+}
 
-@keyframes reel-scroll {
+/* @keyframes reel-scroll {
   0%   { transform: translateY(0); }
   100% { transform: translateY(calc(var(--travel, 1000px) * -1)); }
-}
+} */
 
 .reelItem {
   padding: 6px;

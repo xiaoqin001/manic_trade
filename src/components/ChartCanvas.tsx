@@ -6,6 +6,7 @@ type ChartProps = {
   vCols?: number;      // 纵向格子（列）数量
   hCells?: number;     // 横向“完整格”数量（决定横线数量）
   bgColor?: string;    // 卡片内容背景色（只改 Overlay 的 mobile）
+  hideRightPanel?: boolean; // ← 新增：隐藏右侧 game_demo 面板
 };
 
 /** ===== 布局与网格 ===== */
@@ -83,7 +84,7 @@ const quantizeToStep = (v: number, step = PRICE_STEP) =>
   Math.round(v / step) * step;
 
 /** ================= Chart ================= */
-function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
+function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -555,25 +556,28 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
       <canvas ref={canvasRef} className="chartCanvas" />
 
       {/* 右侧静态面板：高 = chart 高；宽自动，保持比例；实际占位宽度由浏览器计算 */}
-      <img
-        ref={panelImgRef}
-        src="/game_demo.png"
-        alt=""
-        className="right_panel"
-        style={{
-          position: "absolute",
-          inset: "0 0 0 auto",
-          height: "100%",     // 高度与 chart 一致
-          width: "auto",      // 宽度按比例自适应
-          objectFit: "contain",
-          objectPosition: "right center",
-          pointerEvents: "none",
-          zIndex: 2,
-          borderLeft: "1px solid #FFFFFF",
-          // 如需限制最大宽度，可开启：
-          // maxWidth: "260px",
-        }}
-      />
+      {!hideRightPanel && (
+        <img
+          ref={panelImgRef}
+          src="/game_demo.png"
+          alt=""
+          className="right_panel"
+          style={{
+            position: "absolute",
+            inset: "0 0 0 auto",
+            height: "100%",     // 高度与 chart 一致
+            width: "auto",      // 宽度按比例自适应
+            objectFit: "contain",
+            objectPosition: "right center",
+            pointerEvents: "none",
+            zIndex: 2,
+            borderLeft: "1px solid #FFFFFF",
+            // 如需限制最大宽度，可开启：
+            // maxWidth: "260px",
+          }}
+        />
+      )}
+
     </div>
   );
 }

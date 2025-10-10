@@ -396,17 +396,6 @@ useEffect(() => {
               zIndex: 10,
             }}
           >
-            {/* 直接复用 CenterBoard（ChartCanvas） */}
-            <div className="cbScaleBox"
-              style={cbBoxStyle}
-            >
-              <div className="cbScaleInner">
-
-                <CenterBoard
-                  bgColor="#100F17"
-                />
-              </div>
-            </div>
           </div>
           <div
             className="overlayFooter"
