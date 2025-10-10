@@ -11,6 +11,8 @@ type Props = {
 };
 
 type ReelStyle = CSSProperties & { "--travel"?: string };
+type StyleWithVars = CSSProperties & Record<`--${string}`, string>;
+
 
 
 export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props) {
@@ -24,6 +26,19 @@ export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props)
   const [travel, setTravel] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
 
+  const restartAnimation = () => {
+  const el = trackRef.current;
+  if (!el) return;
+  // 暂停当前动画
+  el.style.animationName = "none";
+  // 强制 reflow，让浏览器把上面的更改“刷”进去
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  el.offsetHeight;
+  // 恢复动画名（用 class 里定义的 keyframes）
+  el.style.animationName = "";
+};
+
+
   const recalc = () => {
     const track = trackRef.current;
     if (!track) return;
@@ -33,6 +48,9 @@ export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props)
     const d = Math.max(1, t / pxPerSec);
     setTravel(t);
     setDuration(d);
+
+    requestAnimationFrame(restartAnimation);
+
   };
 
   // 图片加载完成后再计算，避免高度为 0
@@ -60,6 +78,8 @@ export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props)
     const onResize = () => recalc();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+
+
   }, [pxPerSec]);
 
   const animationDirection: CSSProperties["animationDirection"] =
