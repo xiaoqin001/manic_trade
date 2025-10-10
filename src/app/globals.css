@@ -6,7 +6,8 @@
   --tick: rgba(255, 255, 255, .16);
   --text: #fff;
   --rail: 40px;
-  --chartH: 494px;
+  /* --chartH: 494px; */
+  --chartH: 530px;
   --vBias: 0.4;
 }
 

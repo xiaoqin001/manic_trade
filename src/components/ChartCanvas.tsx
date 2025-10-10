@@ -28,9 +28,6 @@ const PRICE_FONT_SIZE = 10;
 const PRICE_FONT_FAMILY = "Montserrat, ui-monospace, SFMono-Regular, Menlo, monospace";
 
 
-const TIME_TZ_LABEL = "UTC+9";    // 文案
-const TIME_TZ_NAME = "Asia/Tokyo"; // 用于格式化（东京=UTC+9）
-
 /** 价格格式化：千分位 + 固定小数 */
 function formatPrice(v: number, digits = 3) {
   const num = v.toFixed(digits);
@@ -90,12 +87,60 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
+  const AUTO_TRIGGER_MS = 5000;
+  const autoTriggeredRef = useRef(false);
+
   // ★ 右侧 demo 图：动态实际宽度
   const panelImgRef = useRef<HTMLImageElement | null>(null);
   const [panelW, setPanelW] = useState<number>(PANEL_W);
 
   const VCOLS = vCols ?? V_COLS;
   const HCELLS = hCells ?? H_FULL_CELLS;
+
+
+  // --- Long 标记：固定在触发瞬间的“数据点”（时间t, 价格v）---
+  const longMarkRef = useRef<{ t: number; v: number } | null>(null);
+
+
+  const FIRST_TRIGGER_MS = 5000;
+  const SWITCH_EVERY_MS = 5000;
+  const nextTriggerAtRef = useRef<number>(FIRST_TRIGGER_MS);
+  const modeRef = useRef<"long" | "short">("long");
+
+  // 用 (t,v) 锁定触发时的数据点（不是屏幕坐标）
+  type Mark = { t: number; v: number; kind: "long" | "short" };
+  const markRef = useRef<Mark | null>(null);
+
+  // 每帧记录“当前价”的数据点（t 与 v）
+  const lastTRef = useRef<number>(0);
+  const lastVRef = useRef<number>(0);
+
+
+
+  // 画一个指向( tipX, tipY ) 的右指三角箭头（绿色）
+  function drawUpArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
+    const w = 12;   // 箭头底宽
+    const h = 10;   // 箭头高
+    ctx.fillStyle = "#2BB20A";
+    ctx.beginPath();
+    ctx.moveTo(tipX, tipY);                  // 这一点就是尖端，对齐价格点
+    ctx.lineTo(tipX - w / 2, tipY + h);      // 左底角
+    ctx.lineTo(tipX + w / 2, tipY + h);      // 右底角
+    ctx.closePath();
+    ctx.fill();
+  }
+
+
+  function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
+    const w = 12, h = 10;
+    ctx.fillStyle = "#6D242F";
+    ctx.beginPath();
+    ctx.moveTo(tipX, tipY);                // 尖端=价格点/渐变边界
+    ctx.lineTo(tipX - w / 2, tipY - h);    // 底边
+    ctx.lineTo(tipX + w / 2, tipY - h);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -339,6 +384,7 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
       // 当前价
       const last = points[points.length - 1];
       const lastY = yToPx(last.v);
+
       // 当前价标签也量化到 0.02（显示看齐）
       const lastLabelV = quantizeToStep(last.v, PRICE_STEP);
       const label = `$${lastLabelV.toFixed(CONFIG.priceLabelDigits)}`;
@@ -387,6 +433,14 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
 
       // “现在线”
       const nowX = chartW * CONFIG.nowXR;
+
+      lastTRef.current = last.t;
+      lastVRef.current = last.v;
+
+
+      // nowXRef.current = nowX;
+      // lastYRef.current = lastY;
+
       ctx.strokeStyle = "#FFF614";
       ctx.beginPath(); ctx.moveTo(nowX + 0.5, 0); ctx.lineTo(nowX + 0.5, h); ctx.stroke();
 
@@ -403,16 +457,62 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
 
       // 左上角时间 + BTC 胶囊
       // drawTopLeftBadge(ctx, last.t, lastLabelV);
+
+      const m = markRef.current;
+      if (m) {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        const chartW = w - panelW;
+        const markX = tToPx(m.t, nowMsVal);
+        const markY = yToPx(m.v);
+
+        if (m.kind === "long") {
+          // 向上渐变：#2BB20A33(≈24%) -> #73737300(0%)
+          const grad = ctx.createLinearGradient(0, markY, 0, 0);
+          grad.addColorStop(0, "rgba(43,178,10,0.24)");  // #2BB20A33
+          grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, chartW, markY);
+
+          drawUpArrow(ctx, markX, markY);               // 上箭头，尖端=markY
+        } else {
+          // 向下渐变：#6D242F3D(≈24%) -> #73737300(0%)
+          const grad = ctx.createLinearGradient(0, markY, 0, h);
+          grad.addColorStop(0, "rgba(175, 60, 77, 0.24)"); // #6D242F3D
+          grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, markY, chartW, h - markY);
+
+          drawDownArrow(ctx, markX, markY);             // 下箭头，尖端=markY
+        }
+      }
+
     }
 
     // —— 主循环 —— //
     function frame(tsPerf: number) {
       if (!running) return;
-      const dt = tsPerf - lastFramePerf; lastFramePerf = tsPerf;
+      const dt = tsPerf - lastFramePerf;
+      lastFramePerf = tsPerf;
       synth(dt);
       const curNow = nowMs();
       drawGridAndLabels(curNow);
       drawPrice(curNow);
+
+      const elapsed = performance.now() - perfStart;
+      if (elapsed >= nextTriggerAtRef.current) {
+        const t = lastTRef.current;
+        const v = lastVRef.current;
+        if (t && v) {
+          markRef.current = { t, v, kind: modeRef.current };
+          // 下一次触发时间 & 模式切换
+          nextTriggerAtRef.current += SWITCH_EVERY_MS;
+          modeRef.current = modeRef.current === "long" ? "short" : "long";
+        } else {
+          // 如果此帧还没拿到点，下一帧再试（避免空读）
+          nextTriggerAtRef.current = elapsed + 100;
+        }
+      }
+
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
@@ -486,7 +586,7 @@ export default function CenterBoard(props: ChartProps) {
   return (
     <section className="card">
       <div className="cardContent" style={{ background: props.bgColor }}>
-        <div className="chartContainer">
+        <div className="chartContainer" >
           <ChartCanvas {...props} />
         </div>
       </div>
