@@ -87,8 +87,6 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  const AUTO_TRIGGER_MS = 5000;
-  const autoTriggeredRef = useRef(false);
 
   // ★ 右侧 demo 图：动态实际宽度
   const panelImgRef = useRef<HTMLImageElement | null>(null);
@@ -99,7 +97,6 @@ function ChartCanvas({ heightPx, vCols, hCells }: ChartProps) {
 
 
   // --- Long 标记：固定在触发瞬间的“数据点”（时间t, 价格v）---
-  const longMarkRef = useRef<{ t: number; v: number } | null>(null);
 
 
   const FIRST_TRIGGER_MS = 5000;

@@ -1,43 +1,6 @@
-// "use client";
-// import { useMemo } from "react";
-
-// type Props = {
-//   reverse?: boolean;
-//   speedSec?: number;          // 动画一轮时间
-//   width?: number | string;    // 列宽（像素或百分比）
-// };
-
-// export default function SideReel({ reverse, speedSec = 20, width = 220 }: Props) {
-//   const imgs = useMemo(
-//     () => Array.from({ length: 12 }, (_, i) => `/reels/r${i + 1}.png`),
-//     []
-//   );
-//   const list = [...imgs, ...imgs]; // 加倍以实现无缝滚动
-
-//   return (
-//     <aside className="side" style={{ width }}>
-//       <div
-//         className="reelTrack"
-//         style={{
-//           animationDuration: `${speedSec}s`,
-//           animationDirection: (reverse ? "reverse" : "normal") as "reverse" | "normal",
-//         }}
-//       >
-//         {list.map((src, i) => (
-//           <div key={i} className="reelItem">
-//             <div className="reelCard">
-//               <img className="reelImg" src={src} alt={`reel ${i}`} />
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//       <div className="sideMask" />
-//     </aside>
-//   );
-// }
-
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 type Props = {
   reverse?: boolean;
@@ -46,6 +9,9 @@ type Props = {
   /** 列宽（可以是 number 像素或 '100%'）*/
   width?: number | string;
 };
+
+type ReelStyle = CSSProperties & { "--travel"?: string };
+
 
 export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props) {
   const imgs = useMemo(
@@ -96,6 +62,15 @@ export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props)
     return () => window.removeEventListener("resize", onResize);
   }, [pxPerSec]);
 
+  const animationDirection: CSSProperties["animationDirection"] =
+    reverse ? "reverse" : "normal";
+
+  const reelStyle: ReelStyle = {
+    "--travel": `${travel}px`,
+    animationDuration: `${duration}s`,
+    animationDirection, // 已用精确类型
+  };
+
   return (
     <aside
       className="side"
@@ -107,12 +82,7 @@ export default function SideReel({ reverse, pxPerSec = 40, width = 220 }: Props)
       <div
         ref={trackRef}
         className="reelTrack"
-        style={{
-          // 用 CSS 变量传入“像素位移”和时长
-          "--travel": `${travel}px`,
-          animationDuration: `${duration}s`,
-          animationDirection: (reverse ? "reverse" : "normal") as "reverse" | "normal",
-        } as any}
+        style={reelStyle}
       >
         {list.map((src, i) => (
           <div key={i} className="reelItem">
