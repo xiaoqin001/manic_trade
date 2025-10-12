@@ -356,7 +356,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       const chartW = w - panelW; // ★
       if (points.length < 2) return;
 
-      // 视口内点 → 像素点
+      // 视口内点  像素点
       const pix: { x: number; y: number }[] = [];
       for (const p of points) {
         const x = tToPx(p.t, nowMsVal);
@@ -435,26 +435,17 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       lastTRef.current = last.t;
       lastVRef.current = last.v;
 
-
-      // nowXRef.current = nowX;
-      // lastYRef.current = lastY;
-
       ctx.strokeStyle = "#FFF614";
       ctx.beginPath(); ctx.moveTo(nowX + 0.5, 0); ctx.lineTo(nowX + 0.5, h); ctx.stroke();
 
-      // 光晕（先画在底层）
       ctx.beginPath();
-      ctx.arc(nowX, lastY, 18, 0, Math.PI * 2);         // 光晕半径可调 16~24
-      ctx.fillStyle = "rgba(95,197,255,0.24)";          // #5FC5FF3D
+      ctx.arc(nowX, lastY, 18, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(95,197,255,0.24)";
       ctx.fill();
 
-      // 当前价圆点
       ctx.beginPath(); ctx.arc(nowX, lastY, 5, 0, Math.PI * 2);
       ctx.fillStyle = "#5AC8FA"; ctx.fill();
       ctx.strokeStyle = "#5FC5FF"; ctx.lineWidth = 1; ctx.stroke();
-
-      // 左上角时间 + BTC 胶囊
-      // drawTopLeftBadge(ctx, last.t, lastLabelV);
 
       const m = markRef.current;
       if (m) {
@@ -502,11 +493,9 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         const v = lastVRef.current;
         if (t && v) {
           markRef.current = { t, v, kind: modeRef.current };
-          // 下一次触发时间 & 模式切换
           nextTriggerAtRef.current += SWITCH_EVERY_MS;
           modeRef.current = modeRef.current === "long" ? "short" : "long";
         } else {
-          // 如果此帧还没拿到点，下一帧再试（避免空读）
           nextTriggerAtRef.current = elapsed + 100;
         }
       }
@@ -515,7 +504,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     }
     requestAnimationFrame(frame);
 
-    // ★ 右图加载/错误后重新测量并 resize
     const img = panelImgRef.current;
     const onImgLoadOrErr = () => { measurePanelWidth(); resize(); };
     if (img) {
@@ -526,7 +514,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       }
     }
 
-    // 视口变化兜底
     const onWinResize = () => resize();
     window.addEventListener("resize", onWinResize);
 
@@ -539,7 +526,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         img.removeEventListener("error", onImgLoadOrErr);
       }
     };
-  }, [panelW, vCols, hCells]); // ★ 依赖 panelW：图片宽度变化会重建尺寸/pxPerSec/重绘
+  }, [panelW, vCols, hCells]);
 
   return (
     <div
@@ -555,7 +542,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     >
       <canvas ref={canvasRef} className="chartCanvas" />
 
-      {/* 右侧静态面板：高 = chart 高；宽自动，保持比例；实际占位宽度由浏览器计算 */}
       {!hideRightPanel && (
         <img
           ref={panelImgRef}
@@ -565,15 +551,14 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
           style={{
             position: "absolute",
             inset: "0 0 0 auto",
-            height: "100%",     // 高度与 chart 一致
-            width: "auto",      // 宽度按比例自适应
+            height: "100%",
+            width: "auto",
             objectFit: "contain",
             objectPosition: "right center",
             pointerEvents: "none",
             zIndex: 2,
             borderLeft: "1px solid #FFFFFF",
-            // 如需限制最大宽度，可开启：
-            // maxWidth: "260px",
+
           }}
         />
       )}
@@ -582,7 +567,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
   );
 }
 
-/** ================= 包装成一个 Section（保持边框不透明、内容 60% 透明） ================= */
 export default function CenterBoard(props: ChartProps) {
   return (
     <section className="card">

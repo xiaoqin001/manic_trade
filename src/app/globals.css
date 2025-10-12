@@ -211,65 +211,76 @@ body {
 
   /* —— 移动端变量 —— */
   :root {
-    --chartH: 330px;        /* 移动端图表更短 */
-    --m-pad-x: 28px;        /* 左右 padding */
-    --m-pad-y: 60px;        /* 上下 padding */
+    --chartH: 330px;
+    /* 移动端图表更短 */
+    --m-pad-x: 28px;
+    /* 左右 padding */
+    --m-pad-y: 60px;
+    /* 上下 padding */
   }
 
   /* —— 容器与栅格：单列，满宽 —— */
   .container {
     max-width: none;
-    padding: 10px;          /* 保留一个小的页面内边距 */
+    padding: 10px;
+    /* 保留一个小的页面内边距 */
   }
+
   .grid3 {
     display: grid;
-    grid-template-columns: 1fr;  /* 单列 */
+    grid-template-columns: 1fr;
+    /* 单列 */
     gap: 0;
   }
 
-  /* —— 顶部背景卡片（mobileHero）：圆角 + 蓝边框 + 阴影 + 内边距 —— */
-  .mobileHero {
-    grid-column: 1 / -1;
-    position: relative;
-    width: 100%;
-    min-height: 100dvh;
-    background: url("/background_mobile.png") center top / cover no-repeat;
 
-    border: 1px solid #388DDD;
-    border-radius: 36px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.35);
-    overflow: hidden;
-    backdrop-filter: blur(6px);
+.mobileHero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #388DDD;
+  border-radius: 36px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(6px);
+  box-sizing: border-box;
+}
 
-    padding: var(--m-pad-y) var(--m-pad-x);
-    box-sizing: border-box;
-  }
+.mobileHero::before {
+  content: "";
+  display: block;
+  width: 100%;
+  /* 高宽比 = 1909 / 880 × 100% ≈ 216.93% */
+  padding-top: 216.93%;
+  background: url("/background_mobile.png") top center / contain no-repeat;
+  background-color: #000; /* 可选：防止边缘露底色 */
+}
 
   .mobileChartOnlyLeft {
     position: absolute;
-    /* top 仍按你想要的上内边距控制（保留标题/提示空间） */
-    /* top: var(--m-pad-y); */
-    /* 关键：左右出血等于左右 padding 的负值 */
     left: calc(-1 * var(--m-pad-x));
     right: calc(-1 * var(--m-pad-x));
-    /* 高度仍由变量控制 */
-    /* height: var(--chartH); */
     margin: 0;
     padding: 0;
-  top: 0; /* 不留顶内边距 */
-  /* 并让高度加回去顶内边距这段（可选）*/
-  height: calc(var(--chartH) + var(--m-pad-y));
+    top: 0;
+    height: calc(var(--chartH) + var(--m-pad-y));
   }
 
   /* —— 避免 card 内部 1px 内缩影响贴顶 —— */
-  .mobileHero .card { margin: 0 !important; }
-  .mobileHero .cardContent { inset: 0 !important; }
+  .mobileHero .card {
+    margin: 0 !important;
+  }
+
+  .mobileHero .cardContent {
+    inset: 0 !important;
+  }
 
   /* —— 图表容器高度与变量一致 —— */
-  .mobileHero .chartContainer { height: var(--chartH) !important; }
+  .mobileHero .chartContainer {
+    height: var(--chartH) !important;
+  }
 
   /* —— 上划提示保留 —— */
-  .swipeHint {
+  /* .swipeHint {
     position: absolute;
     left: 50%;
     bottom: 18px;
@@ -278,30 +289,58 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
     font: 600 12px/1.2 "Montserrat", ui-sans-serif, system-ui;
     pointer-events: none;
     z-index: 5;
-    text-shadow: 0 1px 8px rgba(0,0,0,.35);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
   }
+
   .swipeArrow {
     width: 18px;
     height: 28px;
-    border-left: 2px solid rgba(255,255,255,.9);
-    border-bottom: 2px solid rgba(255,255,255,.9);
+    border-left: 2px solid rgba(255, 255, 255, .9);
+    border-bottom: 2px solid rgba(255, 255, 255, .9);
     transform: rotate(-45deg);
     animation: swipeUp 1.2s ease-in-out infinite;
-  }
+  } */
+
+  .swipeHint {
+  position: absolute;
+  top: 50%;              /* 屏幕中间位置 */
+  left: 50%;
+  transform: translate(-50%, -50%);  /* 居中对齐 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  font: 600 14px/1.2 "Montserrat", ui-sans-serif, system-ui;
+  pointer-events: none;
+  z-index: 5;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
+}
+
+.swipeArrow {
+  width: 24px;
+  height: 36px;
+  border-left: 3px solid rgba(255, 255, 255, .9);
+  border-bottom: 3px solid rgba(255, 255, 255, .9);
+  transform: rotate(135deg);
+  animation: swipeUp 1.2s ease-in-out infinite;
+}
+
   @keyframes swipeUp {
-    0%   { transform: translateY(0) rotate(-45deg);   opacity: .2; }
-    50%  { transform: translateY(-10px) rotate(-45deg); opacity: 1; }
-    100% { transform: translateY(0) rotate(-45deg);   opacity: .2; }
+  0%   { transform: translateY(0) rotate(135deg); }
+  50%  { transform: translateY(-10px) rotate(135deg); }
+  100% { transform: translateY(0) rotate(135deg); }
   }
 
 
-    .overlayFooter {
+  .overlayFooter {
     position: absolute !important;
-    bottom: 24px !important;          /* 距背景底边 24px，可调 */
+    bottom: 24px !important;
+    /* 距背景底边 24px，可调 */
     left: 50% !important;
     transform: translateX(-50%) !important;
     margin: 0 !important;
@@ -316,7 +355,8 @@ body {
   /* 确保 overlay section 本身占满背景高度 */
   .overlay {
     position: relative;
-    height: 100dvh;                   /* 背景充满视口 */
+    height: 100dvh;
+    /* 背景充满视口 */
     overflow: hidden;
   }
 
