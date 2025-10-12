@@ -97,13 +97,20 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
   const HCELLS = hCells ?? H_FULL_CELLS;
 
 
-  // --- Long 标记：固定在触发瞬间的“数据点”（时间t, 价格v）---
 
+  const STAGES = ["long", "none", "short", "none"] as const;
+  type Stage = (typeof STAGES)[number]; // "long" | "none" | "short"
 
-  const FIRST_TRIGGER_MS = 5000;
-  const SWITCH_EVERY_MS = 5000;
-  const nextTriggerAtRef = useRef<number>(FIRST_TRIGGER_MS);
-  const modeRef = useRef<"long" | "short">("long");
+  const DURATIONS: Record<Stage, number> = {
+    long: 5000,
+    short: 5000,
+    none: 2000,
+  };
+
+  // 当前阶段索引 & 模式 & 下次触发时间（都用 ref，避免重渲染重置）
+  const stageIdxRef = useRef(0);
+  const modeRef = useRef<Stage>("none");
+  const nextTriggerAtRef = useRef<number>(DURATIONS["none"]); // 从第1阶段开始计时
 
   // 用 (t,v) 锁定触发时的数据点（不是屏幕坐标）
   type Mark = { t: number; v: number; kind: "long" | "short" };
@@ -112,7 +119,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
   // 每帧记录“当前价”的数据点（t 与 v）
   const lastTRef = useRef<number>(0);
   const lastVRef = useRef<number>(0);
-
 
 
   // 画一个指向( tipX, tipY ) 的右指三角箭头（绿色）
@@ -397,16 +403,23 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       const boxX = priceAnchorX - boxW / 2;
       const boxY = lastY - boxH / 2;
 
+      let color = "#8e8e8eff"; // 默认 long
+      if (modeRef.current === "short") {
+        color = "#ce0e0eff";
+      } else if (modeRef.current === "long") {
+        color = "#2BB20A ";
+      }
+
 
       // 当前价水平实线
-      ctx.strokeStyle = "#2BB20A";
+      ctx.strokeStyle = color;
       ctx.beginPath();
       ctx.moveTo(0, lastY);
       ctx.lineTo(w, lastY);
       ctx.stroke();
 
       // 胶囊背景
-      ctx.fillStyle = "#2BB20A";
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(boxX + radius, boxY);
       ctx.lineTo(boxX + boxW - radius, boxY);
@@ -456,20 +469,20 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
 
         if (m.kind === "long") {
           // 向上渐变：#2BB20A33(≈24%) -> #73737300(0%)
-          const grad = ctx.createLinearGradient(0, markY, 0, 0);
-          grad.addColorStop(0, "rgba(43,178,10,0.24)");  // #2BB20A33
-          grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, chartW, markY);
+          // const grad = ctx.createLinearGradient(0, markY, 0, 0);
+          // grad.addColorStop(0, "rgba(43,178,10,0.24)");  // #2BB20A33
+          // grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
+          // ctx.fillStyle = grad;
+          // ctx.fillRect(0, 0, chartW, markY);
 
           drawUpArrow(ctx, markX, markY);               // 上箭头，尖端=markY
         } else {
           // 向下渐变：#6D242F3D(≈24%) -> #73737300(0%)
-          const grad = ctx.createLinearGradient(0, markY, 0, h);
-          grad.addColorStop(0, "rgba(175, 60, 77, 0.24)"); // #6D242F3D
-          grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, markY, chartW, h - markY);
+          // const grad = ctx.createLinearGradient(0, markY, 0, h);
+          // grad.addColorStop(0, "rgba(175, 60, 77, 0.24)"); // #6D242F3D
+          // grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
+          // ctx.fillStyle = grad;
+          // ctx.fillRect(0, markY, chartW, h - markY);
 
           drawDownArrow(ctx, markX, markY);             // 下箭头，尖端=markY
         }
@@ -477,7 +490,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
 
     }
 
-    // —— 主循环 —— //
+
     function frame(tsPerf: number) {
       if (!running) return;
       const dt = tsPerf - lastFramePerf;
@@ -488,15 +501,24 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       drawPrice(curNow);
 
       const elapsed = performance.now() - perfStart;
+
+      // 达到当前阶段的截止时间：切到下一阶段
       if (elapsed >= nextTriggerAtRef.current) {
-        const t = lastTRef.current;
-        const v = lastVRef.current;
-        if (t && v) {
-          markRef.current = { t, v, kind: modeRef.current };
-          nextTriggerAtRef.current += SWITCH_EVERY_MS;
-          modeRef.current = modeRef.current === "long" ? "short" : "long";
+        // 进入下一个阶段
+        stageIdxRef.current = (stageIdxRef.current + 1) % STAGES.length;
+        modeRef.current = STAGES[stageIdxRef.current];
+
+        // 设定下次触发的绝对时间点
+        nextTriggerAtRef.current = elapsed + DURATIONS[modeRef.current];
+
+        // 根据阶段决定是否生成/清空标记
+        if (modeRef.current === "long" || modeRef.current === "short") {
+          const t = lastTRef.current;
+          const v = lastVRef.current;
+          if (t && v) markRef.current = { t, v, kind: modeRef.current };
         } else {
-          nextTriggerAtRef.current = elapsed + 100;
+          // none 阶段：无效果，清空 mark
+          markRef.current = null;
         }
       }
 
