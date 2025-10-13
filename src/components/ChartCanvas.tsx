@@ -87,6 +87,7 @@ const quantizeToStep = (v: number, step = PRICE_STEP) =>
 function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
 
   // ★ 右侧 demo 图：动态实际宽度
@@ -114,7 +115,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
 
   // 用 (t,v) 锁定触发时的数据点（不是屏幕坐标）
   type Mark = { t: number; v: number; kind: "long" | "short" };
-  const markRef = useRef<Mark | null>(null);
+  // const markRef = useRef<Mark | null>(null);
+  const marksRef = useRef<Mark[]>([]);
 
   // 每帧记录“当前价”的数据点（t 与 v）
   const lastTRef = useRef<number>(0);
@@ -152,6 +154,10 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     const ctx = canvas.getContext("2d")!;
     let running = true;
 
+    // 初始化为透明，避免闪出未渲染样式
+    canvas.style.opacity = "0";
+    canvas.style.transition = "opacity 0.4s ease";
+
     // —— 统一时间：虚拟墙钟 —— //
     const perfStart = performance.now();
     const wallStart = Date.now();
@@ -172,7 +178,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     function resize() {
       // 先量 panel 宽，避免先绘制再跳动
       measurePanelWidth();
-
       const w = parent.clientWidth;
       const h = parent.clientHeight;
       canvas.width = Math.floor(w * dpr);
@@ -183,7 +188,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     }
     // resize();
 
-    const startRender = async () => {
+    const prepareAndStart = async () => {
+      // 等待右侧图片加载完成
       const img = panelImgRef.current;
       if (img && !img.complete) {
         await new Promise<void>((resolve) => {
@@ -192,11 +198,18 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         });
       }
 
-      // 图片加载完毕后再 resize + 启动绘图
+      // 等待一次浏览器 layout 完成（确保 panel 宽度正确）
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+      // 进行 resize 并开始绘制
       resize();
+
+      // 确保所有初始计算完成后再显示 canvas
+      canvas.style.opacity = "1";
+
+      // 启动绘制循环
       requestAnimationFrame(frame);
     };
-
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
 
@@ -475,32 +488,22 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       ctx.fillStyle = "#5AC8FA"; ctx.fill();
       ctx.strokeStyle = "#5FC5FF"; ctx.lineWidth = 1; ctx.stroke();
 
-      const m = markRef.current;
-      if (m) {
-        const w = canvas.clientWidth, h = canvas.clientHeight;
-        const chartW = w - panelW;
-        const markX = tToPx(m.t, nowMsVal);
-        const markY = yToPx(m.v);
+      if (marksRef.current.length > 0) {
+        const visibleMarks: Mark[] = [];
+        for (const m of marksRef.current) {
+          const markX = tToPx(m.t, nowMsVal);
+          const markY = yToPx(m.v);
 
-        if (m.kind === "long") {
-          // 向上渐变：#2BB20A33(≈24%) -> #73737300(0%)
-          // const grad = ctx.createLinearGradient(0, markY, 0, 0);
-          // grad.addColorStop(0, "rgba(43,178,10,0.24)");  // #2BB20A33
-          // grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
-          // ctx.fillStyle = grad;
-          // ctx.fillRect(0, 0, chartW, markY);
-
-          drawUpArrow(ctx, markX, markY);               // 上箭头，尖端=markY
-        } else {
-          // 向下渐变：#6D242F3D(≈24%) -> #73737300(0%)
-          // const grad = ctx.createLinearGradient(0, markY, 0, h);
-          // grad.addColorStop(0, "rgba(175, 60, 77, 0.24)"); // #6D242F3D
-          // grad.addColorStop(1, "rgba(115,115,115,0.0)"); // #73737300
-          // ctx.fillStyle = grad;
-          // ctx.fillRect(0, markY, chartW, h - markY);
-
-          drawDownArrow(ctx, markX, markY);             // 下箭头，尖端=markY
+          if (markX > 0) { // 仍在屏幕内
+            visibleMarks.push(m);
+            if (m.kind === "long") {
+              drawUpArrow(ctx, markX, markY);
+            } else {
+              drawDownArrow(ctx, markX, markY);
+            }
+          }
         }
+        marksRef.current = visibleMarks; // 删除超出屏幕的箭头
       }
 
     }
@@ -526,14 +529,17 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         // 设定下次触发的绝对时间点
         nextTriggerAtRef.current = elapsed + DURATIONS[modeRef.current];
 
-        // 根据阶段决定是否生成/清空标记
+        // if (modeRef.current === "long" || modeRef.current === "short") {
+        //   const t = lastTRef.current;
+        //   const v = lastVRef.current;
+        //   if (t && v) markRef.current = { t, v, kind: modeRef.current };
+        // } else {
+        //   markRef.current = null;
+        // }
         if (modeRef.current === "long" || modeRef.current === "short") {
           const t = lastTRef.current;
           const v = lastVRef.current;
-          if (t && v) markRef.current = { t, v, kind: modeRef.current };
-        } else {
-          // none 阶段：无效果，清空 mark
-          markRef.current = null;
+          if (t && v) marksRef.current.push({ t, v, kind: modeRef.current });
         }
       }
 
@@ -554,7 +560,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     const onWinResize = () => resize();
     window.addEventListener("resize", onWinResize);
 
-    startRender();
+    prepareAndStart();
 
 
     return () => {
