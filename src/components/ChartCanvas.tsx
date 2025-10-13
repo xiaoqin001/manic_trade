@@ -181,7 +181,22 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    resize();
+    // resize();
+
+    const startRender = async () => {
+      const img = panelImgRef.current;
+      if (img && !img.complete) {
+        await new Promise<void>((resolve) => {
+          img.addEventListener("load", () => resolve(), { once: true });
+          img.addEventListener("error", () => resolve(), { once: true });
+        });
+      }
+
+      // 图片加载完毕后再 resize + 启动绘图
+      resize();
+      requestAnimationFrame(frame);
+    };
+
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
 
@@ -538,6 +553,9 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
 
     const onWinResize = () => resize();
     window.addEventListener("resize", onWinResize);
+
+    startRender();
+
 
     return () => {
       running = false;
