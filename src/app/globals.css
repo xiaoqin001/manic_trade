@@ -234,26 +234,27 @@ body {
   }
 
 
-.mobileHero {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid #388DDD;
-  border-radius: 36px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
-  backdrop-filter: blur(6px);
-  box-sizing: border-box;
-}
+  .mobileHero {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #388DDD;
+    border-radius: 36px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+    backdrop-filter: blur(6px);
+    box-sizing: border-box;
+  }
 
-.mobileHero::before {
-  content: "";
-  display: block;
-  width: 100%;
-  /* 高宽比 = 1909 / 880 × 100% ≈ 216.93% */
-  padding-top: 216.93%;
-  background: url("/background_mobile.png") top center / contain no-repeat;
-  background-color: #000; /* 可选：防止边缘露底色 */
-}
+  .mobileHero::before {
+    content: "";
+    display: block;
+    width: 100%;
+    /* 高宽比 = 1909 / 880 × 100% ≈ 216.93% */
+    padding-top: 216.93%;
+    background: url("/background_mobile.png") top center / contain no-repeat;
+    background-color: #000;
+    /* 可选：防止边缘露底色 */
+  }
 
   .mobileChartOnlyLeft {
     position: absolute;
@@ -306,34 +307,44 @@ body {
   } */
 
   .swipeHint {
-  position: absolute;
-  top: 50%;              /* 屏幕中间位置 */
-  left: 50%;
-  transform: translate(-50%, -50%);  /* 居中对齐 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: rgba(255, 255, 255, 0.85);
-  font: 600 14px/1.2 "Montserrat", ui-sans-serif, system-ui;
-  pointer-events: none;
-  z-index: 5;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
-}
+    position: absolute;
+    top: 50%;
+    /* 屏幕中间位置 */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* 居中对齐 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.85);
+    font: 600 14px/1.2 "Montserrat", ui-sans-serif, system-ui;
+    pointer-events: none;
+    z-index: 5;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
+  }
 
-.swipeArrow {
-  width: 24px;
-  height: 36px;
-  border-left: 3px solid rgba(255, 255, 255, .9);
-  border-bottom: 3px solid rgba(255, 255, 255, .9);
-  transform: rotate(135deg);
-  animation: swipeUp 1.2s ease-in-out infinite;
-}
+  .swipeArrow {
+    width: 24px;
+    height: 36px;
+    border-left: 3px solid rgba(255, 255, 255, .9);
+    border-bottom: 3px solid rgba(255, 255, 255, .9);
+    transform: rotate(135deg);
+    animation: swipeUp 1.2s ease-in-out infinite;
+  }
 
   @keyframes swipeUp {
-  0%   { transform: translateY(0) rotate(135deg); }
-  50%  { transform: translateY(-10px) rotate(135deg); }
-  100% { transform: translateY(0) rotate(135deg); }
+    0% {
+      transform: translateY(0) rotate(135deg);
+    }
+
+    50% {
+      transform: translateY(-10px) rotate(135deg);
+    }
+
+    100% {
+      transform: translateY(0) rotate(135deg);
+    }
   }
 
 
@@ -525,6 +536,7 @@ body {
 
 .reelTrack {
   will-change: transform;
+  transform: translateZ(0);
   animation-name: reel-scroll;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
@@ -539,11 +551,6 @@ body {
     transform: translateY(-50%);
   }
 }
-
-/* @keyframes reel-scroll {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(calc(var(--travel, 1000px) * -1)); }
-} */
 
 .reelItem {
   padding: 6px;
@@ -757,4 +764,26 @@ body {
   height: 100%;
   opacity: 0;
   transition: opacity 0.6s ease;
+}
+
+
+.pageFade {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.pageFade.visible {
+  opacity: 1;
+}
+
+.pageLoading {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  font: 600 14px/1.2 "Montserrat", ui-sans-serif, system-ui;
 }
