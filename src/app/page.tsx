@@ -29,6 +29,11 @@ export default function Page() {
   const mobileHeroRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    const t = setTimeout(() => setPageReady(true), 1200); // 1.2s 兜底
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
     if (!isMobile) return;
     const el = mobileHeroRef.current;
     if (!el) return;
@@ -57,6 +62,8 @@ export default function Page() {
     video.src = "/game_demo.mp4";
     video.muted = true;
     video.playsInline = true;
+    video.preload = "metadata"; // 新增
+    video.load();
 
     // 视频加载完 metadata 即可显示
     video.addEventListener("loadeddata", () => {
@@ -78,6 +85,15 @@ export default function Page() {
             {isMobile ? (
               <div className="mobileHero" ref={mobileHeroRef}>
                 {/* 背景视频 */}
+                {/* <video
+                  ref={mobileVideoRef}
+                  className="mobileBgVideo"
+                  src="/game_demo.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                /> */}
                 <video
                   ref={mobileVideoRef}
                   className="mobileBgVideo"
@@ -86,6 +102,8 @@ export default function Page() {
                   loop
                   muted
                   playsInline
+                  preload="metadata"                 // 新增：提示预加载
+                  onLoadedData={() => setPageReady(true)}  // 新增：真机可达
                 />
                 <div className="mobileChartOnlyLeft">
                   <CenterBoard

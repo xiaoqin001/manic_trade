@@ -148,11 +148,30 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
     ctx.fill();
   }
 
+  // useEffect(() => {
+  //   const probe = document.createElement("video");
+  //   probe.src = "/game_demo.mp4";
+  //   probe.muted = true;
+  //   probe.playsInline = true;
+  //   const onLoadedMeta = () => {
+  //     if (Number.isFinite(probe.duration)) {
+  //       setVideoDuration(probe.duration);
+  //     }
+  //   };
+  //   probe.addEventListener("loadedmetadata", onLoadedMeta);
+  //   return () => {
+  //     probe.removeEventListener("loadedmetadata", onLoadedMeta);
+  //   };
+  // }, []);
+
   useEffect(() => {
     const probe = document.createElement("video");
     probe.src = "/game_demo.mp4";
     probe.muted = true;
     probe.playsInline = true;
+    probe.preload = "metadata";   // ✅ 新增：确保元数据会被加载
+    probe.load();                 // ✅ 新增：显式开始加载
+
     const onLoadedMeta = () => {
       if (Number.isFinite(probe.duration)) {
         setVideoDuration(probe.duration);
@@ -164,21 +183,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
     };
   }, []);
 
-  // 虚拟时间钟：即使移动端 video 不在可视区/不播放，也可用 fakeTime 驱动时间线
-  // useEffect(() => {
-  //   if (!videoDuration) return;
-  //   const start = performance.now();
-  //   let id: number;
-  //   const tick = () => {
-  //     const elapsed = (performance.now() - start) / 1000;
-  //     setFakeTime(elapsed % videoDuration); // 按真实时长循环
-  //     id = requestAnimationFrame(tick);
-  //   };
-  //   id = requestAnimationFrame(tick);
-  //   return () => cancelAnimationFrame(id);
-  // }, [videoDuration]);
-
-  // ✅ 改进版：仅在视频真正开始播放后启动 fakeTime，同步首帧
   useEffect(() => {
     if (!videoDuration) return;
     const vid = externalVideoRef?.current || panelRef.current;
