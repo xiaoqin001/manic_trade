@@ -392,12 +392,12 @@ body {
     z-index: 0;
     pointer-events: none;
   }
-  .right_panel {
+  /* .right_panel {
   position: absolute;
   right: -9999px;
   width: 1px;
   height: 1px;
-}
+} */
 }
 
 /* ========== 中央内容卡片 ========== */

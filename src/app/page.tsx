@@ -115,7 +115,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* {(showOverlay || !isMobile) && <Overlay mode="fullscreen" />} */}
+        {(showOverlay || !isMobile) && <Overlay mode="fullscreen" />}
       </main>
     </>
   );
