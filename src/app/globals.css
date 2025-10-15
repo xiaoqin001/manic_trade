@@ -233,7 +233,7 @@ body {
     gap: 0;
   }
 
-
+  /*
   .mobileHero {
     position: relative;
     width: 100%;
@@ -243,18 +243,29 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
     backdrop-filter: blur(6px);
     box-sizing: border-box;
+  } */
+
+  .mobileHero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    /* 或根据设计改成固定比例，比如 216.93% */
+    overflow: hidden;
+    border: 1px solid #388DDD;
+    border-radius: 36px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
+    backdrop-filter: blur(6px);
+    box-sizing: border-box;
   }
 
-  .mobileHero::before {
+  /* .mobileHero::before {
     content: "";
     display: block;
     width: 100%;
-    /* 高宽比 = 1909 / 880 × 100% ≈ 216.93% */
     padding-top: 216.93%;
     background: url("/background_mobile.png") top center / contain no-repeat;
     background-color: #000;
-    /* 可选：防止边缘露底色 */
-  }
+  } */
 
   .mobileChartOnlyLeft {
     position: absolute;
@@ -371,6 +382,16 @@ body {
     overflow: hidden;
   }
 
+  .mobileBgVideo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 保证视频完整显示且不留边 */
+    z-index: 0;
+    pointer-events: none;
+  }
 }
 
 /* ========== 中央内容卡片 ========== */

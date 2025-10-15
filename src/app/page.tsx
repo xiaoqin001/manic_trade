@@ -168,22 +168,17 @@ export default function Page() {
   }, [isMobile]);
 
   useEffect(() => {
-    const imgs = [
-      "/game_demo.png",
-      "/background_mobile.png",
-    ];
+    const video = document.createElement("video");
+    video.src = "/game_demo.mp4";
+    video.muted = true;
+    video.playsInline = true;
 
-    Promise.all(
-      imgs.map(
-        (src) =>
-          new Promise((resolve) => {
-            const img = new Image();
-            img.src = src;
-            img.onload = resolve;
-            img.onerror = resolve;
-          })
-      )
-    ).then(() => {
+    // 视频加载完 metadata 即可显示
+    video.addEventListener("loadeddata", () => {
+      requestAnimationFrame(() => setPageReady(true));
+    });
+    video.addEventListener("error", () => {
+      // 即使加载失败也不要卡死
       requestAnimationFrame(() => setPageReady(true));
     });
   }, []);
@@ -197,6 +192,16 @@ export default function Page() {
           <div className="grid3">
             {isMobile ? (
               <div className="mobileHero" ref={mobileHeroRef}>
+                {/* 背景视频 */}
+                <video
+                  className="mobileBgVideo"
+                  src="/game_demo.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                {/* 左侧 Chart 保持不变 */}
                 <div className="mobileChartOnlyLeft">
                   <CenterBoard bgColor="#100F17" hideRightPanel vCols={11} hCells={4} />
                 </div>

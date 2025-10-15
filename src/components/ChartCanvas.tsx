@@ -2,34 +2,29 @@
 import { useEffect, useRef, useState } from "react";
 
 type ChartProps = {
-  heightPx?: number;   // 高度（仅 mobile 用）
-  vCols?: number;      // 纵向格子（列）数量
-  hCells?: number;     // 横向“完整格”数量（决定横线数量）
-  bgColor?: string;    // 卡片内容背景色（只改 Overlay 的 mobile）
-  hideRightPanel?: boolean; // ← 新增：隐藏右侧 game_demo 面板
+  heightPx?: number;
+  vCols?: number;
+  hCells?: number;
+  bgColor?: string;
+  hideRightPanel?: boolean;
 };
 
-/** ===== 布局与网格 ===== */
-const PANEL_W = 142.5;           // 右侧静态面板“初始估计宽度”（实际用动态 panelW 替代）
-const CHART_H = 494;             // 中间区域高度（需与 CSS 一致）
-const V_COLS = 13;               // 纵向格子数量（整屏列数）
-const TIME_PER_COL_SEC = 10;     // 每列代表的秒数
-const H_FULL_CELLS = 4;          // 横向中间完整格数量（上下各半格）
+const PANEL_W = 142.5;
+const CHART_H = 494;
+const V_COLS = 13;
+const TIME_PER_COL_SEC = 10;
+const H_FULL_CELLS = 4;
 
-/** ===== 右侧价格对齐/样式 ===== */
-const CAPSULE_W = 85;            // 当前价格胶囊宽（更窄）
-const CAPSULE_H = 18;            // 当前价格胶囊高
+const CAPSULE_W = 85;
+const CAPSULE_H = 18;
 
-/** ===== 字体：时间/价格 ===== */
 const TIME_FONT_SIZE = 9;
-const TIME_FONT_WEIGHT = 600;    // Montserrat SemiBold
+const TIME_FONT_WEIGHT = 600;
 const TIME_FONT_FAMILY = "Montserrat, ui-monospace, SFMono-Regular, Menlo, monospace";
 
 const PRICE_FONT_SIZE = 10;
 const PRICE_FONT_FAMILY = "Montserrat, ui-monospace, SFMono-Regular, Menlo, monospace";
 
-
-/** 价格格式化：千分位 + 固定小数 */
 function formatPrice(v: number, digits = 3) {
   const num = v.toFixed(digits);
   const [int, frac] = num.split(".");
@@ -37,112 +32,114 @@ function formatPrice(v: number, digits = 3) {
   return `$${intFmt}.${frac}`;
 }
 
-/** ===== 数值显示量化步长（价格标签按 0.02 递进） ===== */
 const PRICE_STEP = 0.02;
 
-/** ===== 价格点类型 ===== */
-type Pt = { t: number; v: number }; // t = 虚拟墙钟毫秒
+type Pt = { t: number; v: number };
 
-/** ===== 行情生成参数（更稳、更小波动） ===== */
 const CONFIG = {
   basePrice: 116200,
-  sampleMs: 200,        // 采样更密
+  sampleMs: 200,
   pxPerSec: 100,
   nowXR: 0.62,
-
-  // —— 降低真实波动 —— //
-  noiseAmp: 0.005,       // ↓ 随机抖动很小
+  noiseAmp: 0.005,
   driftStep: 0.0002,
   driftClamp: 0.0003,
   driftScale: 0.0005,
-
   meanRevertTo: 116200.0,
-  meanRevertK: 0.35,    // ↑ 回归更强，跑不远
-
+  meanRevertK: 0.35,
   volCycleSec: 18,
-  volCycleMin: 0.9,     // 波动率范围更窄
+  volCycleMin: 0.9,
   volCycleMax: 1.1,
-
-  spikeProb: 0.001,     // 极少插针
+  spikeProb: 0.001,
   spikeAmp: 0.2,
   spikeDecay: 0.9,
-
-  maxMovePerTick: 0.01,  // 单步变化更小
-
-  // —— 视觉窗口：固定区间（默认 ±0.10 = 总 0.20）—— //
+  maxMovePerTick: 0.01,
   yWindowMode: "fixed" as const,
   fixedYPad: 0.10,
-  autoPadRatio: 0.12,   // fixed 模式下无效，仅保留字段
-  priceLabelDigits: 2,  // 显示到 2 位（配合 step 0.02 恰好）
+  autoPadRatio: 0.12,
+  priceLabelDigits: 2,
 };
 
-/** ===== EMA 平滑参数（越小越顺） ===== */
 const EMA_ALPHA = 0.25;
 
-/** 工具：按 0.02 量化一个值（四舍五入到最近的 0.02 倍数） */
 const quantizeToStep = (v: number, step = PRICE_STEP) =>
   Math.round(v / step) * step;
 
-/** ================= Chart ================= */
 function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
-  const [isReady, setIsReady] = useState(false);
 
-
-  // ★ 右侧 demo 图：动态实际宽度
-  const panelImgRef = useRef<HTMLImageElement | null>(null);
+  const panelRef = useRef<HTMLVideoElement | null>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const [panelW, setPanelW] = useState<number>(PANEL_W);
 
   const VCOLS = vCols ?? V_COLS;
   const HCELLS = hCells ?? H_FULL_CELLS;
 
+  // const STAGES = ["long", "none", "short", "none"] as const;
+  // type Stage = (typeof STAGES)[number];
 
+  // const DURATIONS: Record<Stage, number> = {
+  //   long: 5000,
+  //   short: 5000,
+  //   none: 2000,
+  // };
 
-  const STAGES = ["long", "none", "short", "none"] as const;
-  type Stage = (typeof STAGES)[number]; // "long" | "none" | "short"
-
-  const DURATIONS: Record<Stage, number> = {
-    long: 5000,
-    short: 5000,
-    none: 2000,
-  };
-
-  // 当前阶段索引 & 模式 & 下次触发时间（都用 ref，避免重渲染重置）
-  const stageIdxRef = useRef(0);
-  const modeRef = useRef<Stage>("none");
-  const nextTriggerAtRef = useRef<number>(DURATIONS["none"]); // 从第1阶段开始计时
-
-  // 用 (t,v) 锁定触发时的数据点（不是屏幕坐标）
-  type Mark = { t: number; v: number; kind: "long" | "short" };
-  // const markRef = useRef<Mark | null>(null);
-  const marksRef = useRef<Mark[]>([]);
-
-  // 每帧记录“当前价”的数据点（t 与 v）
+  // 视频同步控制
+  const modeRef = useRef<"none" | "long" | "short">("none");
+  const marksRef = useRef<{ t: number; v: number; kind: "long" | "short" }[]>([]);
   const lastTRef = useRef<number>(0);
   const lastVRef = useRef<number>(0);
+  const prevVideoTimeRef = useRef(0);
 
 
-  // 画一个指向( tipX, tipY ) 的右指三角箭头（绿色）
+  // 根据视频时间表设定触发时刻（单位：秒）
+  const triggerTimeline = [
+    { start: 0.132, kind: "short" },
+    { start: 0.528, kind: "long" },
+    { start: 0.924, kind: "short" },
+    { start: 1.353, kind: "long" },
+    { start: 1.716, kind: "short" },
+    { start: 2.145, kind: "long" },
+    { start: 2.574, kind: "short" },
+    { start: 3.696, kind: "long" },
+    { start: 4.62, kind: "short" },
+    { start: 4.851, kind: "long" },
+    { start: 5.61, kind: "long" },
+    { start: 6.402, kind: "short" },
+    { start: 6.732, kind: "long" },
+    { start: 7.458, kind: "short" },
+    { start: 8.745, kind: "long" },
+    { start: 9.174, kind: "short" },
+    { start: 9.6, kind: "long" },
+  ];
+
+  type Mark = { t: number; v: number; kind: "long" | "short" };
+
+  const measurePanelWidth = () => {
+    const w = panelRef.current?.clientWidth ?? 0;
+    const next = Math.max(0, Math.round(w));
+    if (Math.abs(next - panelW) > 0) {
+      setPanelW(next);
+    }
+  };
+
   function drawUpArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = 12;   // 箭头底宽
-    const h = 10;   // 箭头高
+    const w = 12, h = 10;
     ctx.fillStyle = "#2BB20A";
     ctx.beginPath();
-    ctx.moveTo(tipX, tipY);                  // 这一点就是尖端，对齐价格点
-    ctx.lineTo(tipX - w / 2, tipY + h);      // 左底角
-    ctx.lineTo(tipX + w / 2, tipY + h);      // 右底角
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(tipX - w / 2, tipY + h);
+    ctx.lineTo(tipX + w / 2, tipY + h);
     ctx.closePath();
     ctx.fill();
   }
-
-
   function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
     const w = 12, h = 10;
     ctx.fillStyle = "#C82F2F";
     ctx.beginPath();
-    ctx.moveTo(tipX, tipY);                // 尖端=价格点/渐变边界
-    ctx.lineTo(tipX - w / 2, tipY - h);    // 底边
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(tipX - w / 2, tipY - h);
     ctx.lineTo(tipX + w / 2, tipY - h);
     ctx.closePath();
     ctx.fill();
@@ -154,29 +151,16 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     const ctx = canvas.getContext("2d")!;
     let running = true;
 
-    // 初始化为透明，避免闪出未渲染样式
     canvas.style.opacity = "0";
     canvas.style.transition = "opacity 0.4s ease";
 
-    // —— 统一时间：虚拟墙钟 —— //
     const perfStart = performance.now();
     const wallStart = Date.now();
     const nowMs = () => wallStart + (performance.now() - perfStart);
 
-    // —— DPR & 尺寸 —— //
     const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
 
-    // ★ 动态测量右侧图片宽度
-    const measurePanelWidth = () => {
-      const w = panelImgRef.current?.clientWidth ?? 0;
-      const next = Math.max(0, Math.round(w));
-      if (Math.abs(next - panelW) > 0) {
-        setPanelW(next);
-      }
-    };
-
     function resize() {
-      // 先量 panel 宽，避免先绘制再跳动
       measurePanelWidth();
       const w = parent.clientWidth;
       const h = parent.clientHeight;
@@ -186,34 +170,23 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    // resize();
 
     const prepareAndStart = async () => {
-      // 等待右侧图片加载完成
-      const img = panelImgRef.current;
-      if (img && !img.complete) {
-        await new Promise<void>((resolve) => {
-          img.addEventListener("load", () => resolve(), { once: true });
-          img.addEventListener("error", () => resolve(), { once: true });
-        });
+      const vid = panelRef.current;
+      const onVidReady = () => { measurePanelWidth(); resize(); };
+      if (vid) {
+        vid.addEventListener("loadeddata", onVidReady, { once: true });
       }
 
-      // 等待一次浏览器 layout 完成（确保 panel 宽度正确）
       await new Promise((r) => requestAnimationFrame(() => r(null)));
-
-      // 进行 resize 并开始绘制
       resize();
-
-      // 确保所有初始计算完成后再显示 canvas
       canvas.style.opacity = "1";
-
-      // 启动绘制循环
       requestAnimationFrame(frame);
     };
+
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
 
-    // —— 纵向列数固定：根据列数与每列秒数，动态计算 pxPerSec —— //
     let pxPerSec = CONFIG.pxPerSec;
     function computePxPerSec() {
       const chartW = canvas.clientWidth - panelW; // ★ 用动态 panelW
@@ -221,10 +194,9 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       pxPerSec = chartW > 0 ? chartW / visibleSec : CONFIG.pxPerSec;
     }
 
-    // —— 价格状态 —— //
     const points: Pt[] = [];
     let lastV = CONFIG.basePrice;
-    let vEMA = lastV;               // EMA 平滑值
+    let vEMA = lastV;
     let drift = 0;
     let spikeVel = 0;
     let yMin = CONFIG.meanRevertTo - CONFIG.fixedYPad;
@@ -266,43 +238,37 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         delta = clamp(delta, -CONFIG.maxMovePerTick, CONFIG.maxMovePerTick);
         lastV += delta;
 
-        // EMA 平滑
         vEMA = vEMA * (1 - EMA_ALPHA) + lastV * EMA_ALPHA;
 
-        // 用平滑值入列
         points.push({ t: curNowMs, v: vEMA });
 
-        // 丢弃左侧超出
-        const chartW = canvas.clientWidth - panelW; // ★
+        const chartW = canvas.clientWidth - panelW;
         const maxLeft = (chartW * CONFIG.nowXR) / pxPerSec * 1000 + 2000;
         const cutoff = curNowMs - maxLeft;
         while (points.length && points[0].t < cutoff) points.shift();
 
-        // 纵轴窗口（固定）
         yMin = CONFIG.meanRevertTo - CONFIG.fixedYPad;
         yMax = CONFIG.meanRevertTo + CONFIG.fixedYPad;
       }
     }
 
-    // —— 坐标映射（仅图表区域，不含右侧面板）—— //
     const yToPx = (v: number) => {
       const h = canvas.clientHeight;
       return h - ((v - yMin) / (yMax - yMin)) * h;
     };
     const tToPx = (tMs: number, nowMsVal: number) => {
-      const chartW = canvas.clientWidth - panelW; // ★
+      const chartW = canvas.clientWidth - panelW;
       const nowX = chartW * CONFIG.nowXR;
       const dtSec = (nowMsVal - tMs) / 1000;
       return nowX - dtSec * pxPerSec;
     };
 
-    /** Catmull–Rom → 贝塞尔：更圆滑的曲线 */
     function strokeSmoothLine(ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]) {
       if (pts.length < 2) return;
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
 
-      const t = 0.5; // 张力 0.4~0.6 自然
+      const t = 0.5;
       for (let i = 0; i < pts.length - 1; i++) {
         const p0 = pts[i - 1] || pts[i];
         const p1 = pts[i];
@@ -319,12 +285,10 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       ctx.stroke();
     }
 
-    // —— 网格 + 标签（格子随时间移动；价格标签量化到 0.02）—— //
     function drawGridAndLabels(nowMsVal: number) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
-      const chartW = w - panelW; // ★
+      const chartW = w - panelW;
 
-      // 保持列数
       computePxPerSec();
 
       ctx.clearRect(0, 0, w, h);
@@ -332,7 +296,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       ctx.strokeStyle = "rgba(255,255,255,0.15)";
       ctx.fillStyle = "rgba(255,255,255,0.75)";
 
-      // 纵向格 + 时间（只改时间字体）
+      // 纵向格 + 时间
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
       ctx.font = `${TIME_FONT_WEIGHT} ${TIME_FONT_SIZE}px ${TIME_FONT_FAMILY}`;
@@ -363,34 +327,29 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         }
       }
 
-      // 横向格 + 价格（与胶囊中心对齐，胶囊贴右；标签值量化到 0.02）
-      const priceAnchorX = chartW - CAPSULE_W / 2; // ★
+      const priceAnchorX = chartW - CAPSULE_W / 2;
 
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
       ctx.font = `normal ${PRICE_FONT_SIZE}px ${PRICE_FONT_FAMILY}`;
 
-      const parts = HCELLS + 1; // 5 条线（上下半格 + 中间4整格）
+      const parts = HCELLS + 1;
       for (let i = 0; i < parts; i++) {
-        const frac = (i + 0.5) / parts;       // 0.5/5, 1.5/5, ... 4.5/5
-        // 先按比例求值 → 再量化到 0.02 → 再把线画在量化后的值上（保证数值与线一致）
+        const frac = (i + 0.5) / parts;
         const vRaw = yMax - (yMax - yMin) * frac;
         const vQ = quantizeToStep(vRaw, PRICE_STEP);
         const yy = Math.round(yToPx(vQ)) + 0.5;
 
-        // 画横线
         ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w, yy); ctx.stroke();
-        // 画价格标签（量化后，保留两位/格式化千分位）
         ctx.fillText(formatPrice(vQ, CONFIG.priceLabelDigits), priceAnchorX, yy - 2);
       }
     }
 
     function drawPrice(nowMsVal: number) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
-      const chartW = w - panelW; // ★
+      const chartW = w - panelW;
       if (points.length < 2) return;
 
-      // 视口内点  像素点
       const pix: { x: number; y: number }[] = [];
       for (const p of points) {
         const x = tToPx(p.t, nowMsVal);
@@ -400,53 +359,35 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       }
       if (pix.length < 2) return;
 
-      // 曲线风格
       ctx.lineWidth = 2;
       ctx.strokeStyle = "#5FC5FF";
       ctx.shadowColor = "rgba(90, 200, 250, 0.25)";
       ctx.shadowBlur = 6;
-
-      // 平滑曲线
       strokeSmoothLine(ctx, pix);
-
-      // 复原阴影
       ctx.shadowBlur = 0;
       ctx.shadowColor = "transparent";
 
-      // 当前价
       const last = points[points.length - 1];
       const lastY = yToPx(last.v);
 
-      // 当前价标签也量化到 0.02（显示看齐）
       const lastLabelV = quantizeToStep(last.v, PRICE_STEP);
       const label = `$${lastLabelV.toFixed(CONFIG.priceLabelDigits)}`;
 
-      // 与价格刻度共用锚点；胶囊紧贴右缘
-      const priceAnchorX = chartW - CAPSULE_W / 2; // ★
+      const priceAnchorX = chartW - CAPSULE_W / 2;
 
-      // 胶囊几何
       const boxW = CAPSULE_W;
       const boxH = CAPSULE_H;
       const radius = boxH / 2;
       const boxX = priceAnchorX - boxW / 2;
       const boxY = lastY - boxH / 2;
 
-      let color = "#8e8e8eff"; // 默认 long
-      if (modeRef.current === "short") {
-        color = "#ce0e0eff";
-      } else if (modeRef.current === "long") {
-        color = "#2BB20A ";
-      }
+      let color = "#8e8e8eff";
+      if (modeRef.current === "short") color = "#ce0e0eff";
+      else if (modeRef.current === "long") color = "#2BB20A";
 
-
-      // 当前价水平实线
       ctx.strokeStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(0, lastY);
-      ctx.lineTo(w, lastY);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, lastY); ctx.lineTo(w, lastY); ctx.stroke();
 
-      // 胶囊背景
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(boxX + radius, boxY);
@@ -461,29 +402,20 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       ctx.closePath();
       ctx.fill();
 
-      // 胶囊文字
       ctx.fillStyle = "#000";
       ctx.font = "600 12px Montserrat, ui-monospace, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(label, priceAnchorX, boxY + boxH / 2);
 
-
-
-      // “现在线”
       const nowX = chartW * CONFIG.nowXR;
-
       lastTRef.current = last.t;
       lastVRef.current = last.v;
-
       ctx.strokeStyle = "#FFF614";
       ctx.beginPath(); ctx.moveTo(nowX + 0.5, 0); ctx.lineTo(nowX + 0.5, h); ctx.stroke();
 
-      ctx.beginPath();
-      ctx.arc(nowX, lastY, 18, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(95,197,255,0.24)";
-      ctx.fill();
-
+      ctx.beginPath(); ctx.arc(nowX, lastY, 18, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(95,197,255,0.24)"; ctx.fill();
       ctx.beginPath(); ctx.arc(nowX, lastY, 5, 0, Math.PI * 2);
       ctx.fillStyle = "#5AC8FA"; ctx.fill();
       ctx.strokeStyle = "#5FC5FF"; ctx.lineWidth = 1; ctx.stroke();
@@ -493,68 +425,70 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
         for (const m of marksRef.current) {
           const markX = tToPx(m.t, nowMsVal);
           const markY = yToPx(m.v);
-
-          if (markX > 0) { // 仍在屏幕内
+          if (markX > 0) {
             visibleMarks.push(m);
-            if (m.kind === "long") {
-              drawUpArrow(ctx, markX, markY);
-            } else {
-              drawDownArrow(ctx, markX, markY);
-            }
+            if (m.kind === "long") drawUpArrow(ctx, markX, markY);
+            else drawDownArrow(ctx, markX, markY);
           }
         }
-        marksRef.current = visibleMarks; // 删除超出屏幕的箭头
+        marksRef.current = visibleMarks;
       }
-
     }
-
 
     function frame(tsPerf: number) {
       if (!running) return;
+
       const dt = tsPerf - lastFramePerf;
       lastFramePerf = tsPerf;
       synth(dt);
+
       const curNow = nowMs();
       drawGridAndLabels(curNow);
       drawPrice(curNow);
 
-      const elapsed = performance.now() - perfStart;
+      const vid = panelRef.current;
+      if (vid) {
+        const videoTime = vid.currentTime;
 
-      // 达到当前阶段的截止时间：切到下一阶段
-      if (elapsed >= nextTriggerAtRef.current) {
-        // 进入下一个阶段
-        stageIdxRef.current = (stageIdxRef.current + 1) % STAGES.length;
-        modeRef.current = STAGES[stageIdxRef.current];
-
-        // 设定下次触发的绝对时间点
-        nextTriggerAtRef.current = elapsed + DURATIONS[modeRef.current];
-
-        // if (modeRef.current === "long" || modeRef.current === "short") {
-        //   const t = lastTRef.current;
-        //   const v = lastVRef.current;
-        //   if (t && v) markRef.current = { t, v, kind: modeRef.current };
-        // } else {
-        //   markRef.current = null;
-        // }
-        if (modeRef.current === "long" || modeRef.current === "short") {
-          const t = lastTRef.current;
-          const v = lastVRef.current;
-          if (t && v) marksRef.current.push({ t, v, kind: modeRef.current });
+        // 检测是否视频 loop 回到开头
+        if (videoTime < prevVideoTimeRef.current) {
+          modeRef.current = "none"; // 不清空 marks，只重置状态
         }
+        prevVideoTimeRef.current = videoTime;
+
+        // 根据视频时间判断 long / short
+        let newMode: "none" | "long" | "short" = "none";
+        for (const { start, kind } of triggerTimeline) {
+          if (videoTime >= start && videoTime < start + 0.8) {
+            newMode = kind as "long" | "short";
+            break;
+          }
+        }
+        modeRef.current = newMode;
+
+        // 若触发 long / short，生成箭头并锁定当前价位
+        if (newMode !== "none") {
+          const lastMark = marksRef.current[marksRef.current.length - 1];
+          if (!lastMark || lastMark.kind !== newMode || Math.abs(lastMark.t - lastTRef.current) > 1000) {
+            marksRef.current.push({ t: lastTRef.current, v: lastVRef.current, kind: newMode });
+          }
+        }
+
+        // 清理滑出屏幕左边的箭头
+        const chartW = canvas.clientWidth - panelW;
+        const leftBoundary = -40;
+        marksRef.current = marksRef.current.filter((m) => tToPx(m.t, curNow) > leftBoundary);
       }
+
 
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
 
-    const img = panelImgRef.current;
-    const onImgLoadOrErr = () => { measurePanelWidth(); resize(); };
-    if (img) {
-      if (img.complete) onImgLoadOrErr();
-      else {
-        img.addEventListener("load", onImgLoadOrErr, { once: true });
-        img.addEventListener("error", onImgLoadOrErr, { once: true });
-      }
+    const vid = panelRef.current;
+    if (vid) {
+      const onVidReady = () => { measurePanelWidth(); resize(); };
+      vid.addEventListener("loadeddata", onVidReady, { once: true });
     }
 
     const onWinResize = () => resize();
@@ -562,15 +496,10 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
 
     prepareAndStart();
 
-
     return () => {
       running = false;
       ro.disconnect();
       window.removeEventListener("resize", onWinResize);
-      if (img) {
-        img.removeEventListener("load", onImgLoadOrErr);
-        img.removeEventListener("error", onImgLoadOrErr);
-      }
     };
   }, [panelW, vCols, hCells]);
 
@@ -581,34 +510,30 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       style={{
         position: "relative",
         width: "100%",
-        height: heightPx
-          ? `${heightPx}px`
-          : `var(--chartH, ${CHART_H}px)`,
+        height: heightPx ? `${heightPx}px` : `var(--chartH, ${CHART_H}px)`,
       }}
     >
       <canvas ref={canvasRef} className="chartCanvas" />
 
       {!hideRightPanel && (
-        <img
-          ref={panelImgRef}
-          src="/game_demo.png"
-          alt=""
+        <video
+          ref={panelRef}
+          src="/game_demo.mp4"
           className="right_panel"
+          autoPlay
+          loop
+          muted
+          playsInline
+          onLoadedData={() => {
+            measurePanelWidth();
+            setVideoLoaded(true);
+          }}
           style={{
-            position: "absolute",
-            inset: "0 0 0 auto",
-            height: "100%",
-            width: "auto",
-            objectFit: "contain",
-            objectPosition: "right center",
-            pointerEvents: "none",
-            zIndex: 2,
-            borderLeft: "1px solid #FFFFFF",
-
+            opacity: videoLoaded ? 1 : 0,
+            transition: "opacity 0.6s ease",
           }}
         />
       )}
-
     </div>
   );
 }
@@ -617,7 +542,7 @@ export default function CenterBoard(props: ChartProps) {
   return (
     <section className="card">
       <div className="cardContent" style={{ background: props.bgColor }}>
-        <div className="chartContainer" >
+        <div className="chartContainer">
           <ChartCanvas {...props} />
         </div>
       </div>

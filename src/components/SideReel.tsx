@@ -54,9 +54,8 @@ export default function SideReel({ reverse, speedSec = 20, width = 220 }: Props)
   const [animClass, setAnimClass] = useState("paused"); // 默认暂停
 
   useEffect(() => {
-    // ✅ 延迟 0.8s 后强制重启动画
     const timer = setTimeout(() => {
-      setAnimClass("animate-" + Date.now()); // 不断变化的类名 -> 触发重渲染 & 动画重启
+      setAnimClass("animate-" + Date.now());
     }, 100);
 
     return () => clearTimeout(timer);
@@ -65,7 +64,7 @@ export default function SideReel({ reverse, speedSec = 20, width = 220 }: Props)
   return (
     <aside className="side" style={{ width }}>
       <div
-        key={animClass} // ✅ 每次类名变动强制 React 重新渲染 DOM
+        key={animClass}
         className="reelTrack"
         style={{
           animation: `reel-scroll ${speedSec}s linear infinite`,
