@@ -7,6 +7,7 @@ type ChartProps = {
   hCells?: number;
   bgColor?: string;
   hideRightPanel?: boolean;
+  externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
 };
 
 const PANEL_W = 142.5;
@@ -65,13 +66,18 @@ const EMA_ALPHA = 0.25;
 const quantizeToStep = (v: number, step = PRICE_STEP) =>
   Math.round(v / step) * step;
 
-function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
+function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef }: ChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   const panelRef = useRef<HTMLVideoElement | null>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [panelW, setPanelW] = useState<number>(PANEL_W);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [fakeTime, setFakeTime] = useState(0);
+
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 900;
+
 
   const VCOLS = vCols ?? V_COLS;
   const HCELLS = hCells ?? H_FULL_CELLS;
@@ -124,8 +130,30 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     }
   };
 
+  // function drawUpArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
+  //   const w = 12, h = 10;
+  //   ctx.fillStyle = "#2BB20A";
+  //   ctx.beginPath();
+  //   ctx.moveTo(tipX, tipY);
+  //   ctx.lineTo(tipX - w / 2, tipY + h);
+  //   ctx.lineTo(tipX + w / 2, tipY + h);
+  //   ctx.closePath();
+  //   ctx.fill();
+  // }
+  // function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
+  //   const w = 12, h = 10;
+  //   ctx.fillStyle = "#C82F2F";
+  //   ctx.beginPath();
+  //   ctx.moveTo(tipX, tipY);
+  //   ctx.lineTo(tipX - w / 2, tipY - h);
+  //   ctx.lineTo(tipX + w / 2, tipY - h);
+  //   ctx.closePath();
+  //   ctx.fill();
+  // }
+
   function drawUpArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = 12, h = 10;
+    const w = isMobile ? 8 : 12;
+    const h = isMobile ? 6 : 10;
     ctx.fillStyle = "#2BB20A";
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
@@ -134,8 +162,10 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     ctx.closePath();
     ctx.fill();
   }
+
   function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = 12, h = 10;
+    const w = isMobile ? 8 : 12;
+    const h = isMobile ? 6 : 10;
     ctx.fillStyle = "#C82F2F";
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
@@ -144,6 +174,37 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
     ctx.closePath();
     ctx.fill();
   }
+
+  useEffect(() => {
+    const probe = document.createElement("video");
+    probe.src = "/game_demo.mp4";
+    probe.muted = true;
+    probe.playsInline = true;
+    const onLoadedMeta = () => {
+      if (Number.isFinite(probe.duration)) {
+        setVideoDuration(probe.duration);
+      }
+    };
+    probe.addEventListener("loadedmetadata", onLoadedMeta);
+    return () => {
+      probe.removeEventListener("loadedmetadata", onLoadedMeta);
+    };
+  }, []);
+
+  // 虚拟时间钟：即使移动端 video 不在可视区/不播放，也可用 fakeTime 驱动时间线
+  useEffect(() => {
+    if (!videoDuration) return;
+    let start = performance.now();
+    let id: number;
+    const tick = () => {
+      const elapsed = (performance.now() - start) / 1000;
+      setFakeTime(elapsed % videoDuration); // 按真实时长循环
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [videoDuration]);
+
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -446,39 +507,95 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel }: ChartProps) {
       drawGridAndLabels(curNow);
       drawPrice(curNow);
 
-      const vid = panelRef.current;
-      if (vid) {
-        const videoTime = vid.currentTime;
+      // const vid = panelRef.current;
+      // let videoTime = fakeTime;
 
-        // 检测是否视频 loop 回到开头
-        if (videoTime < prevVideoTimeRef.current) {
-          modeRef.current = "none"; // 不清空 marks，只重置状态
+      // // ✅ 优先使用真实视频时间（如果它在前进）
+      // if (vid && vid.readyState >= 2) {
+      //   const ct = vid.currentTime;
+      //   // 如果视频时间还在前进（没被系统暂停），用它
+      //   if (ct > prevVideoTimeRef.current - 0.05) {
+      //     videoTime = ct;
+      //   }
+      // }
+
+
+      const vid = externalVideoRef?.current || panelRef.current;
+      let videoTime = fakeTime;
+
+      if (vid && vid.readyState >= 2) {
+        const ct = vid.currentTime;
+        if (ct > prevVideoTimeRef.current - 0.05) {
+          videoTime = ct;
         }
-        prevVideoTimeRef.current = videoTime;
-
-        // 根据视频时间判断 long / short
-        let newMode: "none" | "long" | "short" = "none";
-        for (const { start, kind } of triggerTimeline) {
-          if (videoTime >= start && videoTime < start + 0.8) {
-            newMode = kind as "long" | "short";
-            break;
-          }
-        }
-        modeRef.current = newMode;
-
-        // 若触发 long / short，生成箭头并锁定当前价位
-        if (newMode !== "none") {
-          const lastMark = marksRef.current[marksRef.current.length - 1];
-          if (!lastMark || lastMark.kind !== newMode || Math.abs(lastMark.t - lastTRef.current) > 1000) {
-            marksRef.current.push({ t: lastTRef.current, v: lastVRef.current, kind: newMode });
-          }
-        }
-
-        // 清理滑出屏幕左边的箭头
-        const chartW = canvas.clientWidth - panelW;
-        const leftBoundary = -40;
-        marksRef.current = marksRef.current.filter((m) => tToPx(m.t, curNow) > leftBoundary);
       }
+
+      // 如果检测到视频循环（倒回到0），重置状态
+      if (videoTime < prevVideoTimeRef.current - 0.1) {
+        modeRef.current = "none";
+      }
+      prevVideoTimeRef.current = videoTime;
+
+      // ✅ 下面保持你原来的 triggerTimeline 匹配逻辑
+      let newMode: "none" | "long" | "short" = "none";
+      for (const { start, kind } of triggerTimeline) {
+        if (videoTime >= start && videoTime < start + 0.8) {
+          newMode = kind as "long" | "short";
+          break;
+        }
+      }
+      modeRef.current = newMode;
+
+      if (newMode !== "none") {
+        const lastMark = marksRef.current[marksRef.current.length - 1];
+        if (
+          !lastMark ||
+          lastMark.kind !== newMode ||
+          Math.abs(lastMark.t - lastTRef.current) > 1000
+        ) {
+          marksRef.current.push({
+            t: lastTRef.current,
+            v: lastVRef.current,
+            kind: newMode,
+          });
+        }
+      }
+
+
+
+      // const vid = panelRef.current;
+      // if (vid) {
+      //   const videoTime = vid.currentTime;
+
+      //   // 检测是否视频 loop 回到开头
+      //   if (videoTime < prevVideoTimeRef.current) {
+      //     modeRef.current = "none"; // 不清空 marks，只重置状态
+      //   }
+      //   prevVideoTimeRef.current = videoTime;
+
+      //   // 根据视频时间判断 long / short
+      //   let newMode: "none" | "long" | "short" = "none";
+      //   for (const { start, kind } of triggerTimeline) {
+      //     if (videoTime >= start && videoTime < start + 0.8) {
+      //       newMode = kind as "long" | "short";
+      //       break;
+      //     }
+      //   }
+      //   modeRef.current = newMode;
+
+      //   // 若触发 long / short，生成箭头并锁定当前价位
+      //   if (newMode !== "none") {
+      //     const lastMark = marksRef.current[marksRef.current.length - 1];
+      //     if (!lastMark || lastMark.kind !== newMode || Math.abs(lastMark.t - lastTRef.current) > 1000) {
+      //       marksRef.current.push({ t: lastTRef.current, v: lastVRef.current, kind: newMode });
+      //     }
+      //   }
+
+      //   // 清理滑出屏幕左边的箭头
+      //   const chartW = canvas.clientWidth - panelW;
+      //   const leftBoundary = -40;
+      //   marksRef.current = marksRef.current.filter((m) => tToPx(m.t, curNow) > leftBoundary);
+      // }
 
 
       requestAnimationFrame(frame);
