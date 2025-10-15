@@ -92,8 +92,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
 
   // 根据视频时间表设定触发时刻（单位：秒）
   const triggerTimeline = [
-    { start: 0.132, kind: "short" },
-    { start: 0.528, kind: "long" },
+    { start: 0.1, kind: "short" },
+    { start: 0.5, kind: "long" },
     { start: 0.924, kind: "short" },
     { start: 1.353, kind: "long" },
     { start: 1.716, kind: "short" },
@@ -110,6 +110,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
     { start: 9.174, kind: "short" },
     { start: 9.6, kind: "long" },
   ];
+
+
 
   type Mark = { t: number; v: number; kind: "long" | "short" };
 
@@ -163,18 +165,55 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
   }, []);
 
   // 虚拟时间钟：即使移动端 video 不在可视区/不播放，也可用 fakeTime 驱动时间线
+  // useEffect(() => {
+  //   if (!videoDuration) return;
+  //   const start = performance.now();
+  //   let id: number;
+  //   const tick = () => {
+  //     const elapsed = (performance.now() - start) / 1000;
+  //     setFakeTime(elapsed % videoDuration); // 按真实时长循环
+  //     id = requestAnimationFrame(tick);
+  //   };
+  //   id = requestAnimationFrame(tick);
+  //   return () => cancelAnimationFrame(id);
+  // }, [videoDuration]);
+
+  // ✅ 改进版：仅在视频真正开始播放后启动 fakeTime，同步首帧
   useEffect(() => {
     if (!videoDuration) return;
-    const start = performance.now();
+    const vid = externalVideoRef?.current || panelRef.current;
+    let startWall: number | null = null;
     let id: number;
+
     const tick = () => {
-      const elapsed = (performance.now() - start) / 1000;
-      setFakeTime(elapsed % videoDuration); // 按真实时长循环
+      if (!startWall) return;
+      const elapsed = (performance.now() - startWall) / 1000;
+      setFakeTime(elapsed % videoDuration);
       id = requestAnimationFrame(tick);
     };
-    id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
+
+    const onPlay = () => {
+      startWall = performance.now();
+      cancelAnimationFrame(id);
+      id = requestAnimationFrame(tick);
+    };
+
+    const onEnded = () => {
+      startWall = performance.now(); // 重新计时（循环播放时同步）
+    };
+
+    vid?.addEventListener("playing", onPlay);
+    vid?.addEventListener("seeked", onPlay);
+    vid?.addEventListener("ended", onEnded);
+
+    return () => {
+      cancelAnimationFrame(id);
+      vid?.removeEventListener("playing", onPlay);
+      vid?.removeEventListener("seeked", onPlay);
+      vid?.removeEventListener("ended", onEnded);
+    };
   }, [videoDuration]);
+
 
 
   useEffect(() => {
@@ -515,6 +554,14 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
           break;
         }
       }
+
+      // const videoOffset = 0.12; // 秒，正数=延后箭头，负数=提前
+      // for (const { start, kind } of triggerTimeline) {
+      //   if (videoTime >= start + videoOffset && videoTime < start + videoOffset + 0.8) {
+      //     newMode = kind as "long" | "short";
+      //     break;
+      //   }
+      // }
       modeRef.current = newMode;
 
       if (newMode !== "none") {
