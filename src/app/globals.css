@@ -317,18 +317,28 @@ body {
   }
 
   .mobileBgVideo::-webkit-media-controls {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
-.mobileBgVideo::-webkit-media-controls-enclosure {
-  display: none !important;
-}
-.mobileBgVideo {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  background-color: transparent !important;
-}
+    display: none !important;
+  }
+
+  .mobileBgVideo::-webkit-media-controls-panel {
+    display: none !important;
+  }
+
+  .mobileBgVideo::-webkit-media-controls-start-playback-button {
+    display: none !important;
+    -webkit-appearance: none !important;
+  }
+
+  .mobileBgVideo::-webkit-media-controls-enclosure {
+    display: none !important;
+  }
+
+  .mobileBgVideo {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    background-color: transparent !important;
+    pointer-events: none;
+  }
 }
 
 /* ========== 中央内容卡片 ========== */

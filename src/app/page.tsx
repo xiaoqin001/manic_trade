@@ -26,28 +26,65 @@ export default function Page() {
   const touchStartY = useRef<number | null>(null);
   const mobileHeroRef = useRef<HTMLDivElement | null>(null);
 
+  // useEffect(() => {
+  //   if (!isMobile) return;
+  //   const videoEl = mobileVideoRef.current;
+  //   if (!videoEl) return;
+
+  //   videoEl.muted = true;
+  //   videoEl.playsInline = true;
+  //   videoEl.loop = true;
+  //   videoEl.preload = "auto";
+
+  //   // ⚡ 延迟一点再尝试播放（等待DOM稳定）
+  //   requestAnimationFrame(() => {
+  //     const tryPlay = () => {
+  //       videoEl.play().catch(() => {
+  //         // iOS Safari 可能阻止，需要静音后再试
+  //         videoEl.muted = true;
+  //         setTimeout(() => videoEl.play().catch(() => { }), 300);
+  //       });
+  //     };
+  //     tryPlay();
+  //   });
+  // }, [isMobile]);
   useEffect(() => {
     if (!isMobile) return;
     const videoEl = mobileVideoRef.current;
     if (!videoEl) return;
 
+    // 设置属性顺序很重要：Safari 解析时严格区分设置时机
     videoEl.muted = true;
     videoEl.playsInline = true;
+    // @ts-ignore Safari 专用
+    videoEl.webkitPlaysInline = true;
     videoEl.loop = true;
     videoEl.preload = "auto";
+    videoEl.removeAttribute("controls"); // 移除默认控件
 
-    // ⚡ 延迟一点再尝试播放（等待DOM稳定）
-    requestAnimationFrame(() => {
-      const tryPlay = () => {
-        videoEl.play().catch(() => {
-          // iOS Safari 可能阻止，需要静音后再试
+    const attemptPlay = () => {
+      const playPromise = videoEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // 再次静音尝试
           videoEl.muted = true;
-          setTimeout(() => videoEl.play().catch(() => { }), 300);
+          requestAnimationFrame(() => videoEl.play().catch(() => { }));
         });
-      };
-      tryPlay();
-    });
+      }
+    };
+
+    // ⚡ Safari 需要等待渲染完成
+    setTimeout(attemptPlay, 300);
+
+    // 防止进入后台后暂停不再恢复
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") attemptPlay();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [isMobile]);
+
 
   useEffect(() => {
     const t = setTimeout(() => setPageReady(true), 1200);
@@ -105,7 +142,7 @@ export default function Page() {
           <div className="grid3">
             {isMobile ? (
               <div className="mobileHero" ref={mobileHeroRef}>
-                <video
+                {/* <video
                   ref={mobileVideoRef}
                   className="mobileBgVideo"
                   src="/game_demo.mp4"
@@ -114,6 +151,20 @@ export default function Page() {
                   muted
                   playsInline
                   preload="metadata"
+                  onLoadedData={() => setPageReady(true)}
+                /> */}
+                <video
+                  ref={mobileVideoRef}
+                  className="mobileBgVideo"
+                  src="/game_demo.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  webkit-playsinline="true"
+                  preload="auto"
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
                   onLoadedData={() => setPageReady(true)}
                 />
                 <div className="mobileChartOnlyLeft">

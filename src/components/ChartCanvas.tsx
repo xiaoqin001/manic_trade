@@ -179,18 +179,10 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
       id = requestAnimationFrame(tick);
     };
 
-    // const onPlay = () => {
-    //   startWall = performance.now();
-    //   cancelAnimationFrame(id);
-    //   id = requestAnimationFrame(tick);
-    // };
-
     const onPlay = () => {
       startWall = performance.now();
       cancelAnimationFrame(id);
       id = requestAnimationFrame(tick);
-
-      // ✅ 通知 chart 启动箭头绘制
       setFakeTime(vid?.currentTime ?? 0);
     };
 
