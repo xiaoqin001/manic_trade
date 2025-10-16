@@ -27,6 +27,26 @@ export default function Page() {
   const mobileHeroRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!isMobile) return;
+    const videoEl = mobileVideoRef.current;
+    if (videoEl) {
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.loop = true;
+      videoEl.autoplay = true;
+      videoEl.preload = "auto";
+      const playPromise = videoEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // 自动播放失败（可能被系统策略阻止）
+          videoEl.muted = true;
+          videoEl.play().catch(() => { });
+        });
+      }
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
     const t = setTimeout(() => setPageReady(true), 1200);
     return () => clearTimeout(t);
   }, []);

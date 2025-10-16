@@ -232,18 +232,15 @@ body {
   .mobileBgVideo {
     position: absolute;
     inset: 0;
-    /* 填满容器（以 padding box 为准）*/
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* 不变形，充满容器 */
     object-position: center bottom;
-    /* 底部对齐，优先显示底部 */
-    /* 关键：裁掉顶部而不改变元素尺寸 → 底边仍贴合容器底边 */
     -webkit-clip-path: inset(var(--video-crop-top) 0 0 0);
     clip-path: inset(var(--video-crop-top) 0 0 0);
     z-index: 0;
     pointer-events: none;
+    -webkit-media-controls-panel: display-none !important;
   }
 
   .swipeHint {
