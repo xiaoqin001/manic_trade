@@ -92,23 +92,23 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
 
   // 根据视频时间表设定触发时刻（单位：秒）
   const triggerTimeline = [
-    { start: 0.1, kind: "short" },
+    // { start: 0.1, kind: "short" },
     { start: 0.5, kind: "long" },
-    { start: 0.924, kind: "short" },
-    { start: 1.353, kind: "long" },
+    // { start: 0.924, kind: "short" },
+    // { start: 1.353, kind: "long" },
     { start: 1.716, kind: "short" },
-    { start: 2.145, kind: "long" },
-    { start: 2.574, kind: "short" },
+    // { start: 2.145, kind: "long" },
+    // { start: 2.574, kind: "short" },
     { start: 3.696, kind: "long" },
     { start: 4.62, kind: "short" },
-    { start: 4.851, kind: "long" },
+    // { start: 4.851, kind: "long" },
     { start: 5.61, kind: "long" },
     { start: 6.402, kind: "short" },
     { start: 6.732, kind: "long" },
     { start: 7.458, kind: "short" },
     { start: 8.745, kind: "long" },
     { start: 9.174, kind: "short" },
-    { start: 9.6, kind: "long" },
+    // { start: 9.6, kind: "long" },
   ];
 
 
@@ -125,7 +125,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
 
 
   function drawUpArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = 7;
+    const w = 8;
     const h = 6;
     ctx.fillStyle = "#2BB20A";
     ctx.beginPath();
@@ -137,7 +137,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
   }
 
   function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = 7;
+    const w = 8;
     const h = 6;
     ctx.fillStyle = "#C82F2F";
     ctx.beginPath();
