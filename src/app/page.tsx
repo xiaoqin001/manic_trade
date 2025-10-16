@@ -29,21 +29,24 @@ export default function Page() {
   useEffect(() => {
     if (!isMobile) return;
     const videoEl = mobileVideoRef.current;
-    if (videoEl) {
-      videoEl.muted = true;
-      videoEl.playsInline = true;
-      videoEl.loop = true;
-      videoEl.autoplay = true;
-      videoEl.preload = "auto";
-      const playPromise = videoEl.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // 自动播放失败（可能被系统策略阻止）
+    if (!videoEl) return;
+
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+    videoEl.loop = true;
+    videoEl.preload = "auto";
+
+    // ⚡ 延迟一点再尝试播放（等待DOM稳定）
+    requestAnimationFrame(() => {
+      const tryPlay = () => {
+        videoEl.play().catch(() => {
+          // iOS Safari 可能阻止，需要静音后再试
           videoEl.muted = true;
-          videoEl.play().catch(() => { });
+          setTimeout(() => videoEl.play().catch(() => { }), 300);
         });
-      }
-    }
+      };
+      tryPlay();
+    });
   }, [isMobile]);
 
   useEffect(() => {

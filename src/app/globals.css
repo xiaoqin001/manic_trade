@@ -316,6 +316,19 @@ body {
     overflow: hidden;
   }
 
+  .mobileBgVideo::-webkit-media-controls {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+.mobileBgVideo::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+.mobileBgVideo {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-color: transparent !important;
+}
 }
 
 /* ========== 中央内容卡片 ========== */
