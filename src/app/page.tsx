@@ -20,16 +20,14 @@ function useMediaQuery(query: string) {
 export default function Page() {
   const isMobile = useMediaQuery('(max-width: 900px)');
   const [showOverlay, setShowOverlay] = useState(false);
-  const [pageReady, setPageReady] = useState(false); // ✅ 新增
+  const [pageReady, setPageReady] = useState(false);
   const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
 
-
-  // 手机端上划手势
   const touchStartY = useRef<number | null>(null);
   const mobileHeroRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setPageReady(true), 1200); // 1.2s 兜底
+    const t = setTimeout(() => setPageReady(true), 1200);
     return () => clearTimeout(t);
   }, []);
 
@@ -92,8 +90,8 @@ export default function Page() {
                   loop
                   muted
                   playsInline
-                  preload="metadata"                 // 新增：提示预加载
-                  onLoadedData={() => setPageReady(true)}  // 新增：真机可达
+                  preload="metadata"
+                  onLoadedData={() => setPageReady(true)}
                 />
                 <div className="mobileChartOnlyLeft">
                   <CenterBoard
@@ -101,7 +99,7 @@ export default function Page() {
                     hideRightPanel={true}
                     vCols={11}
                     hCells={4}
-                    externalVideoRef={mobileVideoRef} // ✅ 关键：传给 ChartCanvas
+                    externalVideoRef={mobileVideoRef}
                   />
                 </div>
                 {!showOverlay && (

@@ -46,7 +46,6 @@ body {
   /* grid-template-columns: 220px 1fr 220px;
   gap: 24px; */
   align-items: stretch;
-
   /* 左右列随内容（SideReel 的 width）自适应，中间自适应 */
   grid-template-columns: min-content 1fr min-content;
   /* 中间与左右 SideReel 的间距 = --rail */
@@ -63,35 +62,24 @@ body {
 @media (max-width: 900px) {
   :root {
     --chartH: 330px;
-    /* 移动端图表更短 */
-  }
-
-  .container {
-    padding: 0 12px;
+    --m-pad-x: 28px;
+    --m-pad-y: 60px;
+    --video-crop-top: 50px;
+    /* 想裁多少就改这里：60px/80px/… */
   }
 
   .container {
     max-width: none;
-    padding: 10px;
+    padding: 35px 25px;
   }
 
-  .grid3 {
-    grid-template-columns: 1fr 1fr;
-    /* 两列占满 */
-    gap: 12px;
-    /* 移动端更小的间距 */
-  }
-
-  /* 仅在 Overlay 里的图表收紧上下外边距 */
   .overlayChartWrap .card {
-    /* 覆盖原先的 clamp 公式，直接固定更小的间距 */
     margin: 0px 0px 0px 0px;
     border-radius: 0 !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     border-color: transparent !important;
   }
-
 
   .overlayChartWrap {
     padding-left: 0 !important;
@@ -112,8 +100,6 @@ body {
 
   .overlayChartWrap .cardContent {
     opacity: 1 !important;
-    /* 可选：如果想强制用传入色以外的默认色，也可以同时指定 */
-    /* background: var(--cb-bg, #100F17) !important; */
   }
 
   /* 去掉图表内部常见的水平 padding（若存在） */
@@ -176,15 +162,6 @@ body {
     margin: 0;
   }
 
-  .overlay {
-    min-height: 0 !important;
-    height: 100dvh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    padding-bottom: calc(max(24px, env(safe-area-inset-bottom, 0px)) + var(--bottom-ui-offset, 0px));
-  }
-
   @supports (height: 100svh) {
     .overlay {
       height: 100svh;
@@ -208,64 +185,12 @@ body {
     touch-action: none !important;
   }
 
-
-  /* —— 移动端变量 —— */
-  :root {
-    --chartH: 330px;
-    /* 移动端图表更短 */
-    --m-pad-x: 28px;
-    /* 左右 padding */
-    --m-pad-y: 60px;
-    /* 上下 padding */
-  }
-
-  /* —— 容器与栅格：单列，满宽 —— */
-  .container {
-    max-width: none;
-    padding: 10px;
-    /* 保留一个小的页面内边距 */
-  }
-
   .grid3 {
     display: grid;
     grid-template-columns: 1fr;
-    /* 单列 */
     gap: 0;
   }
 
-  /*
-  .mobileHero {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid #388DDD;
-    border-radius: 36px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
-    backdrop-filter: blur(6px);
-    box-sizing: border-box;
-  } */
-
-  .mobileHero {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    /* 或根据设计改成固定比例，比如 216.93% */
-    overflow: hidden;
-    border: 1px solid #388DDD;
-    border-radius: 36px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
-    backdrop-filter: blur(6px);
-    box-sizing: border-box;
-  }
-
-  /* .mobileHero::before {
-    content: "";
-    display: block;
-    width: 100%;
-    padding-top: 216.93%;
-    background: url("/background_mobile.png") top center / contain no-repeat;
-    background-color: #000;
-  } */
 
   .mobileChartOnlyLeft {
     position: absolute;
@@ -291,31 +216,35 @@ body {
     height: var(--chartH) !important;
   }
 
-  /* —— 上划提示保留 —— */
-  /* .swipeHint {
-    position: absolute;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    color: rgba(255, 255, 255, 0.85);
-    font: 600 12px/1.2 "Montserrat", ui-sans-serif, system-ui;
-    pointer-events: none;
-    z-index: 5;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
+  .mobileHero {
+    position: relative;
+    width: 100%;
+    height: 90vh;
+    /* 保持容器不动 */
+    overflow: hidden;
+    border: 1px solid #388DDD;
+    border-radius: 36px;
+    box-shadow: 0px 0px 12px 0px #64AAEC80;
+    backdrop-filter: blur(6px);
+    box-sizing: border-box;
   }
 
-  .swipeArrow {
-    width: 18px;
-    height: 28px;
-    border-left: 2px solid rgba(255, 255, 255, .9);
-    border-bottom: 2px solid rgba(255, 255, 255, .9);
-    transform: rotate(-45deg);
-    animation: swipeUp 1.2s ease-in-out infinite;
-  } */
+  .mobileBgVideo {
+    position: absolute;
+    inset: 0;
+    /* 填满容器（以 padding box 为准）*/
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 不变形，充满容器 */
+    object-position: center bottom;
+    /* 底部对齐，优先显示底部 */
+    /* 关键：裁掉顶部而不改变元素尺寸 → 底边仍贴合容器底边 */
+    -webkit-clip-path: inset(var(--video-crop-top) 0 0 0);
+    clip-path: inset(var(--video-crop-top) 0 0 0);
+    z-index: 0;
+    pointer-events: none;
+  }
 
   .swipeHint {
     position: absolute;
@@ -374,6 +303,14 @@ body {
     z-index: 10;
   }
 
+  .overlay {
+    min-height: 0 !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: calc(max(24px, env(safe-area-inset-bottom, 0px)) + var(--bottom-ui-offset, 0px));
+  }
+
   /* 确保 overlay section 本身占满背景高度 */
   .overlay {
     position: relative;
@@ -382,22 +319,6 @@ body {
     overflow: hidden;
   }
 
-  .mobileBgVideo {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* 保证视频完整显示且不留边 */
-    z-index: 0;
-    pointer-events: none;
-  }
-  /* .right_panel {
-  position: absolute;
-  right: -9999px;
-  width: 1px;
-  height: 1px;
-} */
 }
 
 /* ========== 中央内容卡片 ========== */
@@ -424,16 +345,7 @@ body {
   background: #111111;
 }
 
-
-/* ⚠️ 静态格子背景已移除，格子由 Canvas 绘制并随时间移动 */
-/* （若你此前在 .card::before 或 .cardContent::before 里画格子，请不要再启用） */
-
 /* ========== 图表 + 面板 容器 ========== */
-/* .chartContainer {
-  position: relative;
-  height: 494px;
-  z-index: 1;
-} */
 
 .chartContainer {
   position: relative;
@@ -456,18 +368,6 @@ body {
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, .35);
 }
-
-/* 右侧面板贴边，位于内容层（会随 .cardContent 一起透明） */
-/* .right_panel {
-  position: absolute;
-  inset: 0 0 0 auto;
-  width: 142.5px;
-  height: 100%;
-  object-fit: fill;
-  object-position: right center;
-  pointer-events: none;
-  z-index: 2;
-} */
 
 .right_panel {
   position: absolute;
@@ -628,17 +528,6 @@ body {
   pointer-events: none;
   /* 不挡下面的交互（如果需要可去掉） */
 }
-
-/* .overlayBg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: none;
-} */
-
-
 
 /* 内容容器（限制宽度） */
 .overlayInner {

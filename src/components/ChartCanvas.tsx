@@ -90,7 +90,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
   const prevVideoTimeRef = useRef(0);
 
 
-  // 根据视频时间表设定触发时刻（单位：秒）
   const triggerTimeline = [
     // { start: 0.1, kind: "short" },
     { start: 0.5, kind: "long" },
@@ -153,8 +152,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
     probe.src = "/game_demo.mp4";
     probe.muted = true;
     probe.playsInline = true;
-    probe.preload = "metadata";   // ✅ 新增：确保元数据会被加载
-    probe.load();                 // ✅ 新增：显式开始加载
+    probe.preload = "metadata";
+    probe.load();
 
     const onLoadedMeta = () => {
       if (Number.isFinite(probe.duration)) {
@@ -187,7 +186,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
     };
 
     const onEnded = () => {
-      startWall = performance.now(); // 重新计时（循环播放时同步）
+      startWall = performance.now();
     };
 
     vid?.addEventListener("playing", onPlay);
@@ -248,7 +247,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
 
     let pxPerSec = CONFIG.pxPerSec;
     function computePxPerSec() {
-      const chartW = canvas.clientWidth - panelW; // ★ 用动态 panelW
+      const chartW = canvas.clientWidth - panelW;
       const visibleSec = VCOLS * TIME_PER_COL_SEC;
       pxPerSec = chartW > 0 ? chartW / visibleSec : CONFIG.pxPerSec;
     }
@@ -355,7 +354,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
       ctx.strokeStyle = "rgba(255,255,255,0.15)";
       ctx.fillStyle = "rgba(255,255,255,0.75)";
 
-      // 纵向格 + 时间
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
       ctx.font = `${TIME_FONT_WEIGHT} ${TIME_FONT_SIZE}px ${TIME_FONT_FAMILY}`;
@@ -505,19 +503,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
       drawGridAndLabels(curNow);
       drawPrice(curNow);
 
-      // const vid = panelRef.current;
-      // let videoTime = fakeTime;
-
-      // // ✅ 优先使用真实视频时间（如果它在前进）
-      // if (vid && vid.readyState >= 2) {
-      //   const ct = vid.currentTime;
-      //   // 如果视频时间还在前进（没被系统暂停），用它
-      //   if (ct > prevVideoTimeRef.current - 0.05) {
-      //     videoTime = ct;
-      //   }
-      // }
-
-
       const vid = externalVideoRef?.current || panelRef.current;
       let videoTime = fakeTime;
 
@@ -528,13 +513,11 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
         }
       }
 
-      // 如果检测到视频循环（倒回到0），重置状态
       if (videoTime < prevVideoTimeRef.current - 0.1) {
         modeRef.current = "none";
       }
       prevVideoTimeRef.current = videoTime;
 
-      // ✅ 下面保持你原来的 triggerTimeline 匹配逻辑
       let newMode: "none" | "long" | "short" = "none";
       for (const { start, kind } of triggerTimeline) {
         if (videoTime >= start && videoTime < start + 0.8) {
@@ -542,14 +525,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
           break;
         }
       }
-
-      // const videoOffset = 0.12; // 秒，正数=延后箭头，负数=提前
-      // for (const { start, kind } of triggerTimeline) {
-      //   if (videoTime >= start + videoOffset && videoTime < start + videoOffset + 0.8) {
-      //     newMode = kind as "long" | "short";
-      //     break;
-      //   }
-      // }
       modeRef.current = newMode;
 
       if (newMode !== "none") {
@@ -566,9 +541,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
           });
         }
       }
-
-
-
 
       requestAnimationFrame(frame);
     }
