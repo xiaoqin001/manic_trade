@@ -125,8 +125,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
 
 
   function drawUpArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = isMobile ? 8 : 12;
-    const h = isMobile ? 6 : 10;
+    const w = 7;
+    const h = 6;
     ctx.fillStyle = "#2BB20A";
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
@@ -137,8 +137,8 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
   }
 
   function drawDownArrow(ctx: CanvasRenderingContext2D, tipX: number, tipY: number) {
-    const w = isMobile ? 8 : 12;
-    const h = isMobile ? 6 : 10;
+    const w = 7;
+    const h = 6;
     ctx.fillStyle = "#C82F2F";
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
@@ -147,22 +147,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
     ctx.closePath();
     ctx.fill();
   }
-
-  // useEffect(() => {
-  //   const probe = document.createElement("video");
-  //   probe.src = "/game_demo.mp4";
-  //   probe.muted = true;
-  //   probe.playsInline = true;
-  //   const onLoadedMeta = () => {
-  //     if (Number.isFinite(probe.duration)) {
-  //       setVideoDuration(probe.duration);
-  //     }
-  //   };
-  //   probe.addEventListener("loadedmetadata", onLoadedMeta);
-  //   return () => {
-  //     probe.removeEventListener("loadedmetadata", onLoadedMeta);
-  //   };
-  // }, []);
 
   useEffect(() => {
     const probe = document.createElement("video");

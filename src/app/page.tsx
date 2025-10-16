@@ -84,16 +84,6 @@ export default function Page() {
           <div className="grid3">
             {isMobile ? (
               <div className="mobileHero" ref={mobileHeroRef}>
-                {/* 背景视频 */}
-                {/* <video
-                  ref={mobileVideoRef}
-                  className="mobileBgVideo"
-                  src="/game_demo.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                /> */}
                 <video
                   ref={mobileVideoRef}
                   className="mobileBgVideo"
