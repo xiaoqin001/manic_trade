@@ -357,7 +357,9 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
 
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
-      ctx.font = `${TIME_FONT_WEIGHT} ${TIME_FONT_SIZE}px ${TIME_FONT_FAMILY}`;
+      const isMobile = window.innerWidth <= 900;
+      const timeFontSize = isMobile ? 7 : TIME_FONT_SIZE; // ← 原本是9px
+      ctx.font = `${TIME_FONT_WEIGHT} ${timeFontSize}px ${TIME_FONT_FAMILY}`;
 
       const stepMs = TIME_PER_COL_SEC * 1000;
       const baseTick = Math.floor(nowMsVal / stepMs) * stepMs;

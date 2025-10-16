@@ -56,7 +56,7 @@ export default function Page() {
     // 设置属性顺序很重要：Safari 解析时严格区分设置时机
     videoEl.muted = true;
     videoEl.playsInline = true;
-    // @ts-ignore Safari 专用
+    // @ts-expect-error:  Safari only property, not in standard HTMLVideoElement
     videoEl.webkitPlaysInline = true;
     videoEl.loop = true;
     videoEl.preload = "auto";
