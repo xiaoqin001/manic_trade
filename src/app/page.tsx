@@ -19,101 +19,72 @@ function useMediaQuery(query: string) {
 
 export default function Page() {
   const isMobile = useMediaQuery('(max-width: 900px)');
-  const [showOverlay, setShowOverlay] = useState(false);
+  // const [showOverlay, setShowOverlay] = useState(false);
   const [pageReady, setPageReady] = useState(false);
   const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  const touchStartY = useRef<number | null>(null);
+  // const touchStartY = useRef<number | null>(null);
   const mobileHeroRef = useRef<HTMLDivElement | null>(null);
 
-  // useEffect(() => {
-  //   if (!isMobile) return;
-  //   const videoEl = mobileVideoRef.current;
-  //   if (!videoEl) return;
-
-  //   videoEl.muted = true;
-  //   videoEl.playsInline = true;
-  //   videoEl.loop = true;
-  //   videoEl.preload = "auto";
-
-  //   // ⚡ 延迟一点再尝试播放（等待DOM稳定）
-  //   requestAnimationFrame(() => {
-  //     const tryPlay = () => {
-  //       videoEl.play().catch(() => {
-  //         // iOS Safari 可能阻止，需要静音后再试
-  //         videoEl.muted = true;
-  //         setTimeout(() => videoEl.play().catch(() => { }), 300);
-  //       });
-  //     };
-  //     tryPlay();
-  //   });
-  // }, [isMobile]);
   useEffect(() => {
     if (!isMobile) return;
     const videoEl = mobileVideoRef.current;
     if (!videoEl) return;
 
-    // 设置属性顺序很重要：Safari 解析时严格区分设置时机
     videoEl.muted = true;
     videoEl.playsInline = true;
     // @ts-expect-error:  Safari only property, not in standard HTMLVideoElement
     videoEl.webkitPlaysInline = true;
     videoEl.loop = true;
     videoEl.preload = "auto";
-    videoEl.removeAttribute("controls"); // 移除默认控件
+    videoEl.removeAttribute("controls");
 
     const attemptPlay = () => {
       const playPromise = videoEl.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // 再次静音尝试
           videoEl.muted = true;
           requestAnimationFrame(() => videoEl.play().catch(() => { }));
         });
       }
     };
 
-    // ⚡ Safari 需要等待渲染完成
     setTimeout(attemptPlay, 300);
-
-    // 防止进入后台后暂停不再恢复
     const onVisibility = () => {
       if (document.visibilityState === "visible") attemptPlay();
     };
     document.addEventListener("visibilitychange", onVisibility);
-
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [isMobile]);
-
 
   useEffect(() => {
     const t = setTimeout(() => setPageReady(true), 1200);
     return () => clearTimeout(t);
   }, []);
 
-  useEffect(() => {
-    if (!isMobile) return;
-    const el = mobileHeroRef.current;
-    if (!el) return;
+  // useEffect(() => {
+  //   if (!isMobile) return;
+  //   const el = mobileHeroRef.current;
+  //   if (!el) return;
 
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0]?.clientY ?? null;
-    };
-    const onTouchEnd = (e: TouchEvent) => {
-      if (touchStartY.current == null) return;
-      const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
-      const dy = touchStartY.current - endY;
-      if (dy > 40) setShowOverlay(true);
-      touchStartY.current = null;
-    };
+  //   const onTouchStart = (e: TouchEvent) => {
+  //     touchStartY.current = e.touches[0]?.clientY ?? null;
+  //   };
+  //   const onTouchEnd = (e: TouchEvent) => {
+  //     if (touchStartY.current == null) return;
+  //     const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
+  //     const dy = touchStartY.current - endY;
+  //     if (dy > 40) setShowOverlay(true);
+  //     touchStartY.current = null;
+  //   };
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchend', onTouchEnd);
-    };
-  }, [isMobile]);
+  //   el.addEventListener('touchstart', onTouchStart, { passive: true });
+  //   el.addEventListener('touchend', onTouchEnd, { passive: true });
+  //   return () => {
+  //     el.removeEventListener('touchstart', onTouchStart);
+  //     el.removeEventListener('touchend', onTouchEnd);
+  //   };
+  // }, [isMobile]);
 
   useEffect(() => {
     const video = document.createElement("video");
@@ -122,13 +93,10 @@ export default function Page() {
     video.playsInline = true;
     video.preload = "metadata"; // 新增
     video.load();
-
-    // 视频加载完 metadata 即可显示
     video.addEventListener("loadeddata", () => {
       requestAnimationFrame(() => setPageReady(true));
     });
     video.addEventListener("error", () => {
-      // 即使加载失败也不要卡死
       requestAnimationFrame(() => setPageReady(true));
     });
   }, []);
@@ -142,17 +110,6 @@ export default function Page() {
           <div className="grid3">
             {isMobile ? (
               <div className="mobileHero" ref={mobileHeroRef}>
-                {/* <video
-                  ref={mobileVideoRef}
-                  className="mobileBgVideo"
-                  src="/game_demo.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="metadata"
-                  onLoadedData={() => setPageReady(true)}
-                /> */}
                 <video
                   ref={mobileVideoRef}
                   className="mobileBgVideo"
@@ -176,12 +133,12 @@ export default function Page() {
                     externalVideoRef={mobileVideoRef}
                   />
                 </div>
-                {!showOverlay && (
+                {/* {!showOverlay && (
                   <div className="swipeHint">
                     <div className="swipeArrow" />
                     <div>Swipe up</div>
                   </div>
-                )}
+                )} */}
               </div>
             ) : (
               <>
@@ -194,8 +151,7 @@ export default function Page() {
             )}
           </div>
         </div>
-
-        {(showOverlay || !isMobile) && <Overlay mode="fullscreen" />}
+        <Overlay mode="fullscreen" />
       </main>
     </>
   );
