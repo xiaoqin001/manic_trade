@@ -141,8 +141,7 @@ function useStableMobileVideoAutoplay(
 
     video.muted = true;
     video.playsInline = true;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: Safari-specific attribute
+    // @ts-expect-error: Safari-specific
     video.webkitPlaysInline = true;
     video.loop = true;
     video.preload = "metadata";
@@ -275,56 +274,10 @@ export default function Page() {
 
   useStableMobileVideoAutoplay(mobileVideoRef, !!isMobile);
 
-  // useEffect(() => {
-  //   if (!isMobile) return;
-  //   const videoEl = mobileVideoRef.current;
-  //   if (!videoEl) return;
-
-  //   videoEl.muted = true;
-  //   videoEl.playsInline = true;
-  //   // @ts-expect-error:  Safari only property, not in standard HTMLVideoElement
-  //   videoEl.webkitPlaysInline = true;
-  //   videoEl.loop = true;
-  //   videoEl.preload = "auto";
-  //   videoEl.removeAttribute("controls");
-
-  //   const attemptPlay = () => {
-  //     const playPromise = videoEl.play();
-  //     if (playPromise !== undefined) {
-  //       playPromise.catch(() => {
-  //         videoEl.muted = true;
-  //         requestAnimationFrame(() => videoEl.play().catch(() => { }));
-  //       });
-  //     }
-  //   };
-
-  //   setTimeout(attemptPlay, 300);
-  //   const onVisibility = () => {
-  //     if (document.visibilityState === "visible") attemptPlay();
-  //   };
-  //   document.addEventListener("visibilitychange", onVisibility);
-  //   return () => document.removeEventListener("visibilitychange", onVisibility);
-  // }, [isMobile]);
-
   useEffect(() => {
     const t = setTimeout(() => setPageReady(true), 1200);
     return () => clearTimeout(t);
   }, []);
-
-  // useEffect(() => {
-  //   const video = document.createElement("video");
-  //   video.src = "/game_demo.mp4";
-  //   video.muted = true;
-  //   video.playsInline = true;
-  //   video.preload = "metadata"; // 新增
-  //   video.load();
-  //   video.addEventListener("loadeddata", () => {
-  //     requestAnimationFrame(() => setPageReady(true));
-  //   });
-  //   video.addEventListener("error", () => {
-  //     requestAnimationFrame(() => setPageReady(true));
-  //   });
-  // }, []);
 
   if (isMobile === null) return null;
 
