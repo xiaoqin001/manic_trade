@@ -137,15 +137,12 @@ function useStableMobileVideoAutoplay(
     const video = videoRef.current;
     if (!video) return;
 
-    // —— 环境检测 —— //
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-    // —— 属性设置 —— //
     video.muted = true;
     video.playsInline = true;
-    // @ts-ignore
-    video.webkitPlaysInline = true;
-    video.loop = true;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: Safari-specific attribute    video.loop = true;
     video.preload = "metadata";
     video.removeAttribute("controls");
     video.disablePictureInPicture = true;
@@ -162,14 +159,12 @@ function useStableMobileVideoAutoplay(
 
     const canPlay = () => video.readyState >= 2;
 
-    // —— 播放尝试逻辑 —— //
     const playAttempt = () => {
       if (destroyed || !visible || !inViewport || userPaused || !canPlay()) return;
 
       const p = video.play();
       if (p && typeof p.then === "function") {
         p.catch(() => {
-          // Safari：不要频繁 retry，否则出现播放图标
           if (!isSafari && retry < maxRetry && !destroyed && visible && inViewport && !userPaused) {
             const delay = Math.min(1600, 200 * Math.pow(2, retry++));
             setTimeout(playAttempt, delay);
@@ -198,21 +193,18 @@ function useStableMobileVideoAutoplay(
       }
     };
 
-    // —— 页面可见性处理 —— //
     const onVisibility = () => {
       visible = document.visibilityState === "visible";
       if (!visible) return;
 
       if (isSafari) {
-        // Safari: 延迟一点点再尝试恢复，避免“暂停图标”
         setTimeout(() => {
           if (!destroyed && !userPaused && inViewport) {
             const playPromise = video.play();
-            playPromise?.catch(() => {});
+            playPromise?.catch(() => { });
           }
         }, 600);
       } else {
-        // Chrome/Android：允许快速多次重试
         let checkCount = 0;
         const checkResume = () => {
           if (destroyed || !visible || userPaused) return;
@@ -225,7 +217,6 @@ function useStableMobileVideoAutoplay(
       }
     };
 
-    // —— 视口检测 —— //
     const io = new IntersectionObserver((ents) => {
       for (const e of ents) {
         if (e.target === video) {
@@ -236,7 +227,6 @@ function useStableMobileVideoAutoplay(
     }, { threshold: [0, 0.25, 0.5] });
     io.observe(video);
 
-    // —— 各种监听 —— //
     video.addEventListener("pause", onUserPause);
     video.addEventListener("play", onUserPlay);
     video.addEventListener("loadeddata", onReady);
@@ -372,9 +362,8 @@ export default function Page() {
                 <video
                   ref={mobileVideoRef}
                   className="mobileBgVideo"
-                  // 关键：metadata，交给 hook 来调度 play()
                   preload="metadata"
-                  autoPlay // 仍然保留，满足支持场景
+                  autoPlay
                   loop
                   muted
                   playsInline
