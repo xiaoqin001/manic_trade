@@ -62,25 +62,10 @@ function useStableMobileVideoAutoplay(
     const onReady = () => { retry = 0; playAttempt(); };
     const onStalledOrWaiting = () => { retry = Math.max(1, retry); playAttempt(); };
 
-    // const onVisibility = () => {
-    //   visible = document.visibilityState === "visible";
-    //   if (visible) playAttempt();
-    // };
     const onVisibility = () => {
       visible = document.visibilityState === "visible";
-      if (!visible) return;
-
-      let checkCount = 0;
-      const checkResume = () => {
-        if (destroyed || !visible || userPaused) return;
-        if (video.paused || video.readyState < 3) {
-          playAttempt();
-          if (checkCount++ < 8) setTimeout(checkResume, 300);
-        }
-      };
-      setTimeout(checkResume, 400);
+      if (visible) playAttempt();
     };
-
 
     const io = new IntersectionObserver((ents) => {
       for (const e of ents) {
@@ -134,6 +119,8 @@ export default function Page() {
   const [pageReady, setPageReady] = useState(false);
   const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
 
+  // const mobileHeroRef = useRef<HTMLDivElement | null>(null);
+
   useStableMobileVideoAutoplay(mobileVideoRef, !!isMobile);
 
   useEffect(() => {
@@ -149,6 +136,7 @@ export default function Page() {
       <main className={`main pageFade ${pageReady ? "visible" : ""}`}>
         <div className="container">
           <div className="grid3">
+
             {isMobile ? (
               <div className="mobileHero">
                 <video
