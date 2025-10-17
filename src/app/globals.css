@@ -339,7 +339,23 @@ body {
     background-color: transparent !important;
     pointer-events: none;
   }
+
+  .btnPulse {
+    animation: pulseBounce 1.5s ease-in-out infinite;
+  }
 }
+
+@keyframes pulseBounce {
+  0%, 100% {
+    transform: scale(0.99);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.24);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 28px rgba(255, 255, 255, 0.5);
+  }
+}
+
 
 /* ========== 中央内容卡片 ========== */
 /* 边框保持 100% 不透明；内容透明度放在 .cardContent 上控制 */

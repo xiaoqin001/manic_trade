@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Montserrat } from "next/font/google";
 import CenterBoard from "@/components/ChartCanvas";
 
@@ -29,40 +29,40 @@ const montserrat = Montserrat({
 export default function Overlay({ mode = "hero" }: OverlayProps) {
   const isFull = mode === "fullscreen";
   const isMobile = useMediaQuery("(max-width: 900px)");
-    const rootRef = useRef<HTMLElement | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
 
-useEffect(() => {
-  if (!isMobile) return;
-  const el = rootRef.current;
-  if (!el || typeof window === "undefined") return;
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = rootRef.current;
+    if (!el || typeof window === "undefined") return;
 
-  const applyBottomOffset = () => {
-    const ih = window.innerHeight || 0;
-    const vv = window.visualViewport?.height ?? ih;
-    const offset = Math.max(0, Math.round(ih - vv)); // 工具栏/键盘占用的像素
-    el.style.setProperty("--bottom-ui-offset", `${offset}px`);
-  };
+    const applyBottomOffset = () => {
+      const ih = window.innerHeight || 0;
+      const vv = window.visualViewport?.height ?? ih;
+      const offset = Math.max(0, Math.round(ih - vv)); // 工具栏/键盘占用的像素
+      el.style.setProperty("--bottom-ui-offset", `${offset}px`);
+    };
 
-  const handleViewport: EventListener = () => {
+    const handleViewport: EventListener = () => {
+      applyBottomOffset();
+    };
+
     applyBottomOffset();
-  };
 
-  applyBottomOffset();
+    window.addEventListener("resize", handleViewport, { passive: true });
+    window.addEventListener("scroll", handleViewport, { passive: true });
 
-  window.addEventListener("resize", handleViewport, { passive: true });
-  window.addEventListener("scroll", handleViewport, { passive: true });
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", handleViewport);
+    vv?.addEventListener("scroll", handleViewport);
 
-  const vv = window.visualViewport;
-  vv?.addEventListener("resize", handleViewport);
-  vv?.addEventListener("scroll", handleViewport);
-
-  return () => {
-    window.removeEventListener("resize", handleViewport);
-    window.removeEventListener("scroll", handleViewport);
-    vv?.removeEventListener("resize", handleViewport);
-    vv?.removeEventListener("scroll", handleViewport);
-  };
-}, [isMobile]);
+    return () => {
+      window.removeEventListener("resize", handleViewport);
+      window.removeEventListener("scroll", handleViewport);
+      vv?.removeEventListener("resize", handleViewport);
+      vv?.removeEventListener("scroll", handleViewport);
+    };
+  }, [isMobile]);
 
 
 
@@ -83,7 +83,7 @@ useEffect(() => {
 
   return (
     <section
-    ref={rootRef}
+      ref={rootRef}
       className={`overlay ${isFull ? "fixed inset-0 z-[999]" : "relative"}`}
       style={{
         display: "flex",
@@ -337,7 +337,7 @@ useEffect(() => {
               className="heroBtns"
               style={{ display: "flex", gap: "24px", justifyContent: "center" }}
             >
-              <a
+              {/* <a
                 href="#"
                 className="btnPrimary"
                 style={{
@@ -360,7 +360,32 @@ useEffect(() => {
                 }}
               >
                 Join Waitlist
+              </a> */}
+              <a
+                href="#"
+                className="btnPrimary btnPulse"
+                style={{
+                  display: "flex",
+                  width: "358px",
+                  height: "48px",
+                  padding: "12px 28px",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "10px",
+                  borderRadius: "12px",
+                  border: "1px solid #FFF",
+                  background: "#FFF",
+                  boxShadow: "0 0 12px 0 rgba(255, 255, 255, 0.24)",
+                  color: "#000",
+                  fontWeight: 600,
+                  fontSize: "20px",
+                  textDecoration: "none",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Join Waitlist
               </a>
+
               <a
                 href="#"
                 className="btnPrimary"

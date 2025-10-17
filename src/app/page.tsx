@@ -62,30 +62,6 @@ export default function Page() {
     return () => clearTimeout(t);
   }, []);
 
-  // useEffect(() => {
-  //   if (!isMobile) return;
-  //   const el = mobileHeroRef.current;
-  //   if (!el) return;
-
-  //   const onTouchStart = (e: TouchEvent) => {
-  //     touchStartY.current = e.touches[0]?.clientY ?? null;
-  //   };
-  //   const onTouchEnd = (e: TouchEvent) => {
-  //     if (touchStartY.current == null) return;
-  //     const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
-  //     const dy = touchStartY.current - endY;
-  //     if (dy > 40) setShowOverlay(true);
-  //     touchStartY.current = null;
-  //   };
-
-  //   el.addEventListener('touchstart', onTouchStart, { passive: true });
-  //   el.addEventListener('touchend', onTouchEnd, { passive: true });
-  //   return () => {
-  //     el.removeEventListener('touchstart', onTouchStart);
-  //     el.removeEventListener('touchend', onTouchEnd);
-  //   };
-  // }, [isMobile]);
-
   useEffect(() => {
     const video = document.createElement("video");
     video.src = "/game_demo.mp4";
