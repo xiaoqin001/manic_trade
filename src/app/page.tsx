@@ -17,7 +17,6 @@ function useMediaQuery(query: string) {
   return matches;
 }
 
-// page.tsx 片段（替换你现有的 mobile autoplay/useEffect 部分）
 function useStableMobileVideoAutoplay(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   enabled: boolean
@@ -27,7 +26,6 @@ function useStableMobileVideoAutoplay(
     const video = videoRef.current;
     if (!video) return;
 
-    // —— 基本属性（先就位）——
     video.muted = true;
     video.playsInline = true;
     // @ts-expect-error: Safari-specific
@@ -35,24 +33,21 @@ function useStableMobileVideoAutoplay(
     video.loop = true;
     video.preload = "metadata";
     video.removeAttribute("controls");
-    // React 属性里同时设定会更稳：disableRemotePlayback
-    // controlsList 已在 JSX 中设置
 
     let visible = false;
     let inViewport = false;
     let destroyed = false;
-    let userPaused = false; // 防止用户点暂停时我们强行拉起来
+    let userPaused = false;
     let retry = 0;
     const maxRetry = 6;
 
-    const canPlay = () => video.readyState >= 2; // HAVE_CURRENT_DATA+
+    const canPlay = () => video.readyState >= 2;
 
     const playAttempt = () => {
       if (destroyed || !visible || !inViewport || userPaused || !canPlay()) return;
       const p = video.play();
       if (p && typeof p.then === "function") {
         p.catch(() => {
-          // 指数退避重试
           if (retry < maxRetry && !destroyed && visible && inViewport && !userPaused) {
             const delay = Math.min(1600, 200 * Math.pow(2, retry++));
             setTimeout(playAttempt, delay);
@@ -61,21 +56,32 @@ function useStableMobileVideoAutoplay(
       }
     };
 
-    // 监听「用户显式暂停」
     const onUserPause = () => { userPaused = true; };
     const onUserPlay = () => { userPaused = false; };
 
-    // 监听可播放/卡顿状态
     const onReady = () => { retry = 0; playAttempt(); };
     const onStalledOrWaiting = () => { retry = Math.max(1, retry); playAttempt(); };
 
-    // 可见性
+    // const onVisibility = () => {
+    //   visible = document.visibilityState === "visible";
+    //   if (visible) playAttempt();
+    // };
     const onVisibility = () => {
       visible = document.visibilityState === "visible";
-      if (visible) playAttempt();
+      if (!visible) return;
+
+      let checkCount = 0;
+      const checkResume = () => {
+        if (destroyed || !visible || userPaused) return;
+        if (video.paused || video.readyState < 3) {
+          playAttempt();
+          if (checkCount++ < 8) setTimeout(checkResume, 300);
+        }
+      };
+      setTimeout(checkResume, 400);
     };
 
-    // 进入/离开视口
+
     const io = new IntersectionObserver((ents) => {
       for (const e of ents) {
         if (e.target === video) {
@@ -100,9 +106,7 @@ function useStableMobileVideoAutoplay(
     window.addEventListener("orientationchange", onVisibility);
     window.addEventListener("resize", onVisibility);
 
-    // 初始化一次
     visible = document.visibilityState === "visible";
-    // 若 metadata 尚未就绪，等 onReady，再 playAttempt
     if (canPlay()) playAttempt();
 
     return () => {

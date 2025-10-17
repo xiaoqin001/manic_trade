@@ -82,7 +82,6 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
   const VCOLS = vCols ?? V_COLS;
   const HCELLS = hCells ?? H_FULL_CELLS;
 
-  // 视频同步控制
   const modeRef = useRef<"none" | "long" | "short">("none");
   const marksRef = useRef<{ t: number; v: number; kind: "long" | "short" }[]>([]);
   const lastTRef = useRef<number>(0);
@@ -358,7 +357,7 @@ function ChartCanvas({ heightPx, vCols, hCells, hideRightPanel, externalVideoRef
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
       const isMobile = window.innerWidth <= 900;
-      const timeFontSize = isMobile ? 7 : TIME_FONT_SIZE; // ← 原本是9px
+      const timeFontSize = isMobile ? 7 : TIME_FONT_SIZE;
       ctx.font = `${TIME_FONT_WEIGHT} ${timeFontSize}px ${TIME_FONT_FAMILY}`;
 
       const stepMs = TIME_PER_COL_SEC * 1000;

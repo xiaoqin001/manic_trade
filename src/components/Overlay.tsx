@@ -69,14 +69,14 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
 
   type CbBoxStyle = React.CSSProperties & {
     '--chartH'?: string;
-    '--cb-scale'?: string; // 或 string | number
+    '--cb-scale'?: string;
     '--cb-extra'?: string;
   };
 
   const cbBoxStyle: CbBoxStyle = {
-    '--chartH': '494px',   // 基准高度（与你的 Chart 内部一致）
-    '--cb-scale': '0.512', // = 253 / 494
-    '--cb-extra': '12px',  // 底部安全区
+    '--chartH': '494px',
+    '--cb-scale': '0.512',
+    '--cb-extra': '12px',
   };
 
   if (isMobile === null) return null;
