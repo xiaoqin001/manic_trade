@@ -229,11 +229,11 @@ export default function Page() {
                   loop
                   muted
                   playsInline
-                  // @ts-ignore
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore: Safari-specific attribute
                   webkit-playsinline="true"
                   disableRemotePlayback
                   controlsList="nodownload nofullscreen noremoteplayback"
-                  // poster="/video_poster.jpg"
                   onLoadedData={() => setPageReady(true)}
                   src="/game_demo.mp4"
                 />
