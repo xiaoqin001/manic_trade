@@ -142,7 +142,9 @@ function useStableMobileVideoAutoplay(
     video.muted = true;
     video.playsInline = true;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: Safari-specific attribute    video.loop = true;
+    // @ts-ignore: Safari-specific attribute
+    video.webkitPlaysInline = true;
+    video.loop = true;
     video.preload = "metadata";
     video.removeAttribute("controls");
     video.disablePictureInPicture = true;
