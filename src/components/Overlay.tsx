@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { Montserrat } from "next/font/google";
-import CenterBoard from "@/components/ChartCanvas";
+// import CenterBoard from "@/components/ChartCanvas";
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState<boolean | null>(null);
@@ -337,7 +337,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
               className="heroBtns"
               style={{ display: "flex", gap: "24px", justifyContent: "center" }}
             >
-              {/* <a
+              <a
                 href="#"
                 className="btnPrimary"
                 style={{
@@ -360,32 +360,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
                 }}
               >
                 Join Waitlist
-              </a> */}
-              <a
-                href="#"
-                className="btnPrimary btnPulse"
-                style={{
-                  display: "flex",
-                  width: "358px",
-                  height: "48px",
-                  padding: "12px 28px",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: "10px",
-                  borderRadius: "12px",
-                  border: "1px solid #FFF",
-                  background: "#FFF",
-                  boxShadow: "0 0 12px 0 rgba(255, 255, 255, 0.24)",
-                  color: "#000",
-                  fontWeight: 600,
-                  fontSize: "20px",
-                  textDecoration: "none",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Join Waitlist
               </a>
-
               <a
                 href="#"
                 className="btnPrimary"

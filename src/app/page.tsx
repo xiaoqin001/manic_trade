@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Overlay from "@/components/Overlay";
 import CenterBoard from "@/components/ChartCanvas";
 import SideReel from "@/components/SideReel";
+import Image from "next/image";
+import hideIcon from "/public/hide.png";
+import showIcon from "/public/show.png";
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState<boolean | null>(null);
@@ -118,6 +121,7 @@ export default function Page() {
   const isMobile = useMediaQuery('(max-width: 900px)');
   const [pageReady, setPageReady] = useState(false);
   const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [overlayVisible, setOverlayVisible] = useState(true);
 
   // const mobileHeroRef = useRef<HTMLDivElement | null>(null);
 
@@ -133,6 +137,21 @@ export default function Page() {
 
   return (
     <>
+      {isMobile && (
+        <button
+          className="overlayToggleBtn"
+          onClick={() => setOverlayVisible((v) => !v)}
+        >
+          <Image
+            src={overlayVisible ? hideIcon : showIcon}
+            alt={overlayVisible ? "Hide Overlay" : "Show Overlay"}
+            className="overlayToggleIcon"
+            width={65}
+            height={65}
+            priority
+          />
+        </button>
+      )}
       <main className={`main pageFade ${pageReady ? "visible" : ""}`}>
         <div className="container">
           <div className="grid3">
@@ -177,7 +196,7 @@ export default function Page() {
             )}
           </div>
         </div>
-        <Overlay mode="fullscreen" />
+        {overlayVisible && <Overlay mode="fullscreen" />}
       </main>
     </>
   );
