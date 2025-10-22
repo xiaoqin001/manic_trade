@@ -137,7 +137,7 @@ export default function Page() {
 
   return (
     <>
-      {isMobile && (
+      {/* {isMobile && (
         <button
           className="overlayToggleBtn"
           onClick={() => setOverlayVisible((v) => !v)}
@@ -151,7 +151,7 @@ export default function Page() {
             priority
           />
         </button>
-      )}
+      )} */}
       <main className={`main pageFade ${pageReady ? "visible" : ""}`}>
         <div className="container">
           <div className="grid3">
@@ -161,9 +161,8 @@ export default function Page() {
                 <video
                   ref={mobileVideoRef}
                   className="mobileBgVideo"
-                  // 关键：metadata，交给 hook 来调度 play()
                   preload="metadata"
-                  autoPlay // 仍然保留，满足支持场景
+                  autoPlay
                   loop
                   muted
                   playsInline
@@ -197,6 +196,21 @@ export default function Page() {
           </div>
         </div>
         {overlayVisible && <Overlay mode="fullscreen" />}
+        {isMobile && pageReady && (
+          <button
+            className="overlayToggleBtn"
+            onClick={() => setOverlayVisible((v) => !v)}
+          >
+            <Image
+              src={overlayVisible ? hideIcon : showIcon}
+              alt={overlayVisible ? "Hide Overlay" : "Show Overlay"}
+              className="overlayToggleIcon"
+              width={65}
+              height={65}
+              priority
+            />
+          </button>
+        )}
       </main>
     </>
   );

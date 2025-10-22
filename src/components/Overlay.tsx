@@ -342,7 +342,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
                 className="btnPrimary"
                 style={{
                   display: "flex",
-                  width: "358px",
+                  width: "320px",
                   height: "48px",
                   padding: "12px 28px",
                   justifyContent: "center",
@@ -366,7 +366,7 @@ export default function Overlay({ mode = "hero" }: OverlayProps) {
                 className="btnPrimary"
                 style={{
                   display: "flex",
-                  width: "358px",
+                  width: "320px",
                   height: "48px",
                   padding: "12px 28px",
                   justifyContent: "center",
